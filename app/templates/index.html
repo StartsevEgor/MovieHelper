@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MovieHelper — Каталог фильмов</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Шапка -->
+    <header class="header">
+        <div class="logo">🎬 MovieHelper</div>
+        <nav class="nav">
+            <button class="nav-btn active" data-page="home">Главная</button>
+            <button class="nav-btn" data-page="catalog">Каталог</button>
+            <button class="nav-btn" data-page="analytics">Аналитика</button>
+            <button class="nav-btn" data-page="add">+ Добавить</button>
+        </nav>
+        <button id="themeToggle" class="theme-toggle" title="Переключить тему">
+            🌙
+        </button>
+    </header>
+
+    <!-- ===== ГЛАВНАЯ ===== -->
+    <section id="home" class="home">
+        <!-- Приветствие + статистика -->
+        <div class="hero">
+            <div class="hero-top">
+                <div>
+                    <h1 class="hero-title">Моя коллекция</h1>
+                    <p class="hero-subtitle"><span id="homeTotal">0</span> фильмов</p>
+                </div>
+                <div class="hero-search-wrap">
+                    <input type="text" id="homeSearch" placeholder="🔍 Что будем смотреть?" class="hero-search">
+                </div>
+            </div>
+
+            <div class="stats-row">
+                <div class="stat-box">
+                    <div class="stat-box-value" id="homeWatched">0</div>
+                    <div class="stat-box-label">Просмотрено</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value" id="homePlanned">0</div>
+                    <div class="stat-box-label">Планы</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value" id="homeWatching">0</div>
+                    <div class="stat-box-label">В процессе</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-box-value" id="homeRating">0</div>
+                    <div class="stat-box-label">Рейтинг</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Продолжить просмотр -->
+        <div class="home-section">
+            <div class="section-header">
+                <h2>Продолжить просмотр</h2>
+                <button class="link-btn" onclick="goToCatalog('watching')">Все →</button>
+            </div>
+            <div id="continueWatching" class="horizontal-scroll"></div>
+        </div>
+
+        <!-- Что посмотреть -->
+        <div class="home-section">
+            <div class="section-header">
+                <h2>Что посмотреть?</h2>
+                <button class="link-btn" onclick="goToCatalog('planned')">Все →</button>
+            </div>
+            <div class="planned-banner" onclick="goToCatalog('planned')">
+                <span class="planned-icon">🎯</span>
+                <span class="planned-text"><span id="plannedCount">0</span> фильмов ждут просмотра</span>
+                <span class="planned-arrow">→</span>
+            </div>
+        </div>
+
+        <!-- Последние добавленные -->
+        <div class="home-section">
+            <div class="section-header">
+                <h2>Недавно добавленные</h2>
+                <button class="link-btn" onclick="goToCatalog()">Все →</button>
+            </div>
+            <div id="recentMovies" class="horizontal-scroll"></div>
+        </div>
+    </section>
+
+    <!-- ===== КАТАЛОГ ===== -->
+    <section id="catalogPage" class="hidden">
+        <section class="filters" id="filtersPanel">
+            <input type="text" id="searchInput" placeholder="🔍 Поиск по названию или режиссёру..." class="search-input">
+
+            <select id="genreFilter" class="filter-select">
+                <option value="">Все жанры</option>
+                <option value="Боевик">Боевик</option>
+                <option value="Комедия">Комедия</option>
+                <option value="Драма">Драма</option>
+                <option value="Фантастика">Фантастика</option>
+                <option value="Ужасы">Ужасы</option>
+                <option value="Триллер">Триллер</option>
+                <option value="Документальный">Документальный</option>
+            </select>
+
+            <select id="directorFilter" class="filter-select">
+                <option value="">Все режиссёры</option>
+            </select>
+
+            <select id="statusFilter" class="filter-select">
+                <option value="">Все статусы</option>
+                <option value="watched">Просмотрено</option>
+                <option value="watching">В процессе</option>
+                <option value="planned">В планах</option>
+            </select>
+
+            <select id="sortFilter" class="filter-select">
+                <option value="date">По дате добавления</option>
+                <option value="rating">По рейтингу</option>
+                <option value="title">По названию</option>
+            </select>
+        </section>
+
+        <main id="catalog" class="catalog"></main>
+    </section>
+
+    <!-- ===== ДЕТАЛЬНАЯ СТРАНИЦА ===== -->
+    <section id="movieDetail" class="movie-detail hidden"></section>
+
+    <!-- ===== АНАЛИТИКА ===== -->
+    <section id="analytics" class="analytics hidden">
+        <h2>📊 Аналитика</h2>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value" id="totalCount">0</div>
+                <div class="stat-label">Всего фильмов</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="watchedCount">0</div>
+                <div class="stat-label">Просмотрено</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="plannedCountA">0</div>
+                <div class="stat-label">В планах</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value" id="avgRating">0</div>
+                <div class="stat-label">Средний рейтинг</div>
+            </div>
+        </div>
+
+        <h3>Жанры</h3>
+        <div id="genreChart" class="genre-chart"></div>
+
+        <h3>Топ режиссёров</h3>
+        <div id="directorChart" class="genre-chart"></div>
+    </section>
+
+    <!-- ===== МОДАЛЬНОЕ ОКНО ===== -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle">Добавить фильм</h2>
+            <form id="addForm">
+                <input type="text" id="movieTitle" placeholder="Название" required>
+                <input type="number" id="movieYear" placeholder="Год" required>
+                <input type="text" id="movieDirector" placeholder="Режиссёр" required>
+                <input type="text" id="movieGenre" placeholder="Жанр" required>
+                <input type="text" id="movieActors" placeholder="Актёры (через запятую)">
+                <input type="text" id="moviePoster" placeholder="URL постера (необязательно)">
+                <textarea id="movieDescription" placeholder="Описание фильма" rows="3"></textarea>
+                <select id="movieStatus">
+                    <option value="planned">В планах</option>
+                    <option value="watching">В процессе</option>
+                    <option value="watched">Просмотрено</option>
+                </select>
+                <input type="number" id="movieRating" placeholder="Рейтинг (1-10)" min="1" max="10">
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Отмена</button>
+                    <button type="submit" class="btn-save">Сохранить</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</body>
+</html>

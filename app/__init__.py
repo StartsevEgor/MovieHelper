@@ -22,6 +22,7 @@ def create_app(config_class=Config):
 
         # Регистрация маршрутов
         app.register_blueprint(main)
+        print(app.config['SQLALCHEMY_DATABASE_URI'])
         db.create_all()
 
     return app

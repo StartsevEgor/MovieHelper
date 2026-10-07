@@ -27,10 +27,16 @@ class Genre(db.Model):
     name = db.Column(db.String(50), nullable=False, unique=True)
 
 
+from app import db
+
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     title = db.Column(db.String(150), nullable=False)
-
-    # Связь "многие ко многим" с таблицей Genre
-    genres = db.relationship('Genre', secondary=movies_genres, lazy='subquery',
-                             backref=db.backref('movies', lazy=True))
+    year = db.Column(db.Integer, nullable=False)
+    director = db.Column(db.String(100))
+    genre = db.Column(db.String(50))
+    actors = db.Column(db.String(255))      # Новое поле
+    description = db.Column(db.Text)        # Новое поле
+    status = db.Column(db.String(20), default='planned')
+    rating = db.Column(db.Integer, default=0)
+    poster = db.Column(db.String(500))
