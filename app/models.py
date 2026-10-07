@@ -31,6 +31,7 @@ from app import db
 
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    imdb_id = db.Column(db.String(20), unique=True, nullable=True)
     title = db.Column(db.String(150), nullable=False)
     year = db.Column(db.Integer, nullable=False)
     director = db.Column(db.String(100))
