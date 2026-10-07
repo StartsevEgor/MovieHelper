@@ -1,43 +1,52 @@
+import json
 from app import db
-
-# Связующая таблица для пользователей и фильмов
-users_movies = db.Table('users_movies',
-                        db.Column('user_id', db.Integer, db.ForeignKey('user.id'), primary_key=True),
-                        db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'), primary_key=True)
-                        )
-
-# Связующая таблица для фильмов и жанров
-movies_genres = db.Table('movies_genres',
-                         db.Column('movie_id', db.Integer, db.ForeignKey('movie.id'), primary_key=True),
-                         db.Column('genre_id', db.Integer, db.ForeignKey('genre.id'), primary_key=True)
-                         )
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), nullable=False, unique=True)
+    display_name = db.Column(db.String(50), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=False)
+    created_at = db.Column(db.DateTime, server_default=db.func.now())
 
-    # Связь "многие ко многим" с таблицей Movie
-    movies = db.relationship('Movie', secondary=users_movies, lazy='subquery',
-                             backref=db.backref('users', lazy=True))
+    # Связь 1 ко многим: при удалении пользователя удалятся и все его фильмы
+    movies = db.relationship('Movie', backref='owner', lazy=True, cascade="all, delete-orphan")
 
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
 
-class Genre(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(50), nullable=False, unique=True)
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
 
-
-from app import db
 
 class Movie(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    imdb_id = db.Column(db.String(20), unique=True, nullable=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+
+    type = db.Column(db.String(20), default='movie')
     title = db.Column(db.String(150), nullable=False)
-    year = db.Column(db.Integer, nullable=False)
+    year = db.Column(db.Integer)
     director = db.Column(db.String(100))
-    genre = db.Column(db.String(50))
-    actors = db.Column(db.String(255))      # Новое поле
-    description = db.Column(db.Text)        # Новое поле
+    genre = db.Column(db.String(100))
+    actors = db.Column(db.String(255))
+    poster = db.Column(db.String(500))
+    description = db.Column(db.Text)
+    duration = db.Column(db.Integer, default=0)
+
+    # Теги хранятся в виде текстовой JSON-строки (сериализация массива)
+    tags = db.Column(db.Text, default='[]')
     status = db.Column(db.String(20), default='planned')
     rating = db.Column(db.Integer, default=0)
-    poster = db.Column(db.String(500))
+    review = db.Column(db.Text)
+
+    seasons = db.Column(db.Integer, default=1)
+    episodes = db.Column(db.Integer, default=1)
+    watched_episodes = db.Column(db.Integer, default=0)
+
+    # Вспомогательные методы для работы с тегами
+    def get_tags(self):
+        return json.loads(self.tags) if self.tags else []
+
+    def set_tags(self, tags_list):
+        self.tags = json.dumps(tags_list)
