@@ -1,21 +1,38 @@
 let currentUser = null;
 let movies = [];
 
+// ===== Примеры фильмов и сериалов =====
+const sampleMovies = [
+    { type: 'movie', title: 'Начало', year: 2010, director: 'Кристофер Нолан', genre: 'Фантастика, Триллер, Боевик', actors: 'Леонардо ДиКаприо, Джозеф Гордон-Левитт, Эллен Пейдж', poster: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg', description: 'Дом Кобб — талантливый вор, лучший из лучших в опасном искусстве извлечения.', duration: 148, collection: 'Нолан', tags: ['шедевр', 'фантастика'], status: 'watched', rating: 5, review: 'Потрясающий фильм!', favorite: true },
+    { type: 'movie', title: 'Интерстеллар', year: 2014, director: 'Кристофер Нолан', genre: 'Фантастика, Драма', actors: 'Мэттью МакКонахи, Энн Хэтэуэй', poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', description: 'Группа исследователей отправляется в путешествие через червоточину.', duration: 169, collection: 'Нолан', tags: ['космос', 'эпичный'], status: 'watched', rating: 5, review: '', favorite: true },
+    { type: 'movie', title: 'Тёмный рыцарь', year: 2008, director: 'Кристофер Нолан', genre: 'Боевик, Триллер, Драма', actors: 'Кристиан Бэйл, Хит Леджер', poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg', description: 'Бэтмен поднимает ставки в войне с криминалом.', duration: 152, collection: 'Тёмный рыцарь', tags: ['супергерои', 'DC'], status: 'watched', rating: 5, review: '', favorite: false },
+    { type: 'movie', title: 'Матрица', year: 1999, director: 'Лана Вачовски', genre: 'Фантастика, Боевик', actors: 'Киану Ривз, Лоуренс Фишберн', poster: 'https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', description: 'Хакер Нео узнаёт правду о реальности.', duration: 136, collection: 'Матрица', tags: ['классика', 'философия'], status: 'watched', rating: 5, review: '', favorite: true },
+    { type: 'movie', title: 'Бойцовский клуб', year: 1999, director: 'Дэвид Финчер', genre: 'Триллер, Драма', actors: 'Брэд Питт, Эдвард Нортон', poster: 'https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', description: 'Клерк знакомится с Тайлером Дёрденом.', duration: 139, collection: '', tags: ['психология', 'культовый'], status: 'watched', rating: 5, review: '', favorite: false },
+    { type: 'movie', title: 'Форрест Гамп', year: 1994, director: 'Роберт Земекис', genre: 'Драма, Мелодрама', actors: 'Том Хэнкс, Робин Райт', poster: 'https://image.tmdb.org/t/p/w500/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg', description: 'История жизни Форреста Гампа.', duration: 142, collection: '', tags: ['вдохновляющий', 'драма'], status: 'watched', rating: 5, review: '', favorite: true },
+    { type: 'movie', title: 'Дюна', year: 2021, director: 'Дени Вильнёв', genre: 'Фантастика, Приключения', actors: 'Тимоти Шаламе, Ребекка Фергюсон', poster: 'https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg', description: 'Пол Атрейдес отправляется на Арракис.', duration: 155, collection: 'Дюна', tags: ['эпичный', 'фантастика'], status: 'watched', rating: 4, review: '', favorite: false },
+    { type: 'movie', title: 'Дюна: Часть вторая', year: 2024, director: 'Дени Вильнёв', genre: 'Фантастика, Приключения', actors: 'Тимоти Шаламе, Зендея', poster: 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nez7S.jpg', description: 'Пол объединяется с фременами.', duration: 166, collection: 'Дюна', tags: ['эпичный', 'фантастика'], status: 'planned', rating: 0, review: '', favorite: false },
+    { type: 'movie', title: 'Джон Уик', year: 2014, director: 'Чад Стахелски', genre: 'Боевик, Триллер', actors: 'Киану Ривз', poster: 'https://image.tmdb.org/t/p/w500/fZPSd91yGE9fCcCe6OoQr6E3Bev.jpg', description: 'Бывший наёмник возвращается к активной жизни.', duration: 101, collection: 'Джон Уик', tags: ['боевик', 'экшн'], status: 'watched', rating: 4, review: '', favorite: false },
+    { type: 'movie', title: 'Оппенгеймер', year: 2023, director: 'Кристофер Нолан', genre: 'Драма, Исторический', actors: 'Киллиан Мёрфи, Эмили Блант', poster: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', description: 'История Роберта Оппенгеймера.', duration: 180, collection: 'Нолан', tags: ['история', 'биография'], status: 'planned', rating: 0, review: '', favorite: true },
+    { type: 'series', title: 'Во все тяжкие', year: 2008, director: 'Винс Гиллиган', genre: 'Драма, Триллер, Криминал', actors: 'Брайан Крэнстон, Аарон Пол', poster: 'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg', description: 'Учитель химии начинает варить метамфетамин.', duration: 47, collection: '', tags: ['культовый', 'драма'], status: 'watched', rating: 5, review: '', favorite: true, seasons: 5, episodes: 13, watchedEpisodes: 62 },
+    { type: 'series', title: 'Игра престолов', year: 2011, director: 'Дэвид Бениофф', genre: 'Фэнтези, Драма', actors: 'Эмилия Кларк, Питер Динклэйдж', poster: 'https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg', description: 'Борьба за Железный трон.', duration: 57, collection: '', tags: ['фэнтези', 'эпичный'], status: 'watched', rating: 4, review: '', favorite: false, seasons: 8, episodes: 10, watchedEpisodes: 73 },
+    { type: 'series', title: 'Очень странные дела', year: 2016, director: 'Братья Даффер', genre: 'Фантастика, Ужасы', actors: 'Милли Бобби Браун', poster: 'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg', description: 'Исчезновение мальчика раскрывает тайны.', duration: 51, collection: '', tags: ['ностальгия', '80-е'], status: 'watching', rating: 4, review: '', favorite: true, seasons: 4, episodes: 9, watchedEpisodes: 25 },
+    { type: 'series', title: 'Чернобыль', year: 2019, director: 'Йохан Ренк', genre: 'Драма, Исторический', actors: 'Джаред Харрис', poster: 'https://image.tmdb.org/t/p/w500/hlLXt2tUzOv86Y857V8rN7h8w.jpg', description: 'Крупнейшая техногенная катастрофа.', duration: 60, collection: '', tags: ['история', 'драма'], status: 'watched', rating: 5, review: '', favorite: true, seasons: 1, episodes: 5, watchedEpisodes: 5 },
+    { type: 'series', title: 'Рик и Морти', year: 2013, director: 'Дэн Хармон', genre: 'Мультсериал, Фантастика', actors: 'Джастин Ройланд', poster: 'https://image.tmdb.org/t/p/w500/cvhNj9eoRBe5SxjCbQTkh05UP5K.jpg', description: 'Путешествия по вселенным.', duration: 23, collection: '', tags: ['мультфильм', 'юмор'], status: 'watching', rating: 5, review: '', favorite: false, seasons: 7, episodes: 10, watchedEpisodes: 51 },
+    { type: 'series', title: 'Дом Дракона', year: 2022, director: 'Райан Кондал', genre: 'Фэнтези, Драма', actors: 'Мэтт Смит, Эмма Д\'Арси', poster: 'https://image.tmdb.org/t/p/w500/7QMsOTMUswlwxJP0rTTZfmz2tX2.jpg', description: 'Гражданская война Таргариенов.', duration: 60, collection: '', tags: ['фэнтези', 'драконы'], status: 'watching', rating: 4, review: '', favorite: false, seasons: 2, episodes: 10, watchedEpisodes: 12 }
+];
+
 // ===== Регистрация =====
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errorBox = document.getElementById('registerError');
     errorBox.classList.add('hidden');
-
     const username = document.getElementById('registerUsername').value.trim();
     const displayName = document.getElementById('registerDisplayName').value.trim();
     const password = document.getElementById('registerPassword').value;
     const passwordConfirm = document.getElementById('registerPasswordConfirm').value;
-
     if (password !== passwordConfirm) {
         return showError(errorBox, 'Пароли не совпадают');
     }
-
     try {
         const response = await fetch('/api/register', {
             method: 'POST',
@@ -23,11 +40,9 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
             body: JSON.stringify({ username, displayName, password })
         });
         const data = await response.json();
-
         if (!response.ok) throw new Error(data.error || 'Ошибка регистрации');
-
         currentUser = data;
-        await fetchMovies(); // Загружаем коллекцию с сервера
+        await fetchMovies();
         loginSuccess(username);
     } catch (err) {
         showError(errorBox, err.message);
@@ -39,10 +54,8 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const errorBox = document.getElementById('loginError');
     errorBox.classList.add('hidden');
-
     const username = document.getElementById('loginUsername').value.trim();
     const password = document.getElementById('loginPassword').value;
-
     try {
         const response = await fetch('/api/login', {
             method: 'POST',
@@ -50,9 +63,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
             body: JSON.stringify({ username, password })
         });
         const data = await response.json();
-
         if (!response.ok) throw new Error(data.error || 'Ошибка входа');
-
         currentUser = data;
         await fetchMovies();
         loginSuccess(username);
@@ -71,7 +82,6 @@ function loginSuccess(username) {
     document.getElementById('app').classList.remove('hidden');
     updateUserUI();
     updateAllFilters();
-
     const savedTheme = localStorage.getItem('moviehelper-theme-' + username) || 'dark';
     document.body.classList.toggle('light', savedTheme === 'light');
     document.getElementById('themeToggle').textContent = savedTheme === 'light' ? '☀️' : '🌙';
@@ -88,6 +98,13 @@ async function logout() {
     document.getElementById('loginForm').reset();
     document.getElementById('registerForm').reset();
     document.getElementById('userDropdown').classList.add('hidden');
+    // Сбрасываем табы авторизации
+    document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+    document.querySelector('.auth-tab[data-tab="login"]').classList.add('active');
+    document.getElementById('loginForm').classList.remove('hidden');
+    document.getElementById('registerForm').classList.add('hidden');
+    document.getElementById('loginError').classList.add('hidden');
+    document.getElementById('registerError').classList.add('hidden');
 }
 
 // ===== Получение коллекции =====
@@ -95,14 +112,41 @@ async function fetchMovies() {
     const response = await fetch('/api/movies');
     if (response.ok) {
         movies = await response.json();
+        if (movies.length === 0) {
+            await loadSampleMovies();
+        }
         renderHome();
         renderCatalog();
         updateAllFilters();
         if (!document.getElementById('analytics').classList.contains('hidden')) {
             renderAnalytics();
         }
+        if (!document.getElementById('collectionsPage').classList.contains('hidden')) {
+            renderCollections();
+            if (!document.getElementById('favoritesPage').classList.contains('hidden')) {
+                renderFavorites();
+            }
+        }
     }
 }
+
+// ===== Загрузка примеров =====
+async function loadSampleMovies() {
+    try {
+        for (const movie of sampleMovies) {
+            await fetch('/api/movies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(movie)
+            });
+        }
+        const response = await fetch('/api/movies');
+        if (response.ok) movies = await response.json();
+    } catch (err) {
+        console.error('Ошибка загрузки примеров:', err);
+    }
+}
+
 // ===== Обновление интерфейса =====
 function updateUserUI() {
     if (!currentUser) return;
@@ -133,6 +177,7 @@ document.getElementById('userBtn').addEventListener('click', (e) => {
     e.stopPropagation();
     document.getElementById('userDropdown').classList.toggle('hidden');
 });
+
 document.addEventListener('click', () => {
     document.getElementById('userDropdown').classList.add('hidden');
 });
@@ -146,30 +191,46 @@ document.addEventListener('click', () => {
             await fetchMovies();
             loginSuccess(currentUser.username);
         } else {
+            // Гарантируем правильное начальное состояние
             document.getElementById('authScreen').classList.remove('hidden');
             document.getElementById('app').classList.add('hidden');
+            document.getElementById('loginForm').classList.remove('hidden');
+            document.getElementById('registerForm').classList.add('hidden');
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('registerError').classList.add('hidden');
+            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+            document.querySelector('.auth-tab[data-tab="login"]').classList.add('active');
         }
     } catch (err) {
         document.getElementById('authScreen').classList.remove('hidden');
+        document.getElementById('app').classList.add('hidden');
+        document.getElementById('loginForm').classList.remove('hidden');
+        document.getElementById('registerForm').classList.add('hidden');
+        document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
+        document.querySelector('.auth-tab[data-tab="login"]').classList.add('active');
     }
 })();
+
 // ============================================
-//  ОСНОВНАЯ ЛОГИКА (как было)
+//  ОСНОВНАЯ ЛОГИКА
 // ============================================
 const typeLabels = {
     movie: '🎬 Фильм',
     series: '📺 Сериал',
     documentary: '🎥 Документальный'
 };
+
 const statusLabels = {
     watched: 'Просмотрено',
     watching: 'В процессе',
     planned: 'В планах'
 };
+
 function formatRating(rating) {
     if (!rating || rating <= 0) return '—';
     return '★'.repeat(rating) + '☆'.repeat(5 - rating);
 }
+
 function updateAllFilters() {
     const directors = [...new Set(movies.map(m => m.director).filter(Boolean))].sort();
     const dirFilter = document.getElementById('directorFilter');
@@ -177,29 +238,53 @@ function updateAllFilters() {
     dirFilter.innerHTML = '<option value="">Все режиссёры</option>' +
         directors.map(d => `<option value="${d}">${d}</option>`).join('');
     if (directors.includes(dirCurrent)) dirFilter.value = dirCurrent;
+
     const genres = [...new Set(movies.flatMap(m => (m.genre || '').split(',').map(g => g.trim())).filter(Boolean))].sort();
     const genFilter = document.getElementById('genreFilter');
     const genCurrent = genFilter.value;
     genFilter.innerHTML = '<option value="">Все жанры</option>' +
         genres.map(g => `<option value="${g}">${g}</option>`).join('');
     if (genres.includes(genCurrent)) genFilter.value = genCurrent;
+
     const tags = [...new Set(movies.flatMap(m => m.tags || []))].sort();
     const tagFilter = document.getElementById('tagFilter');
     const tagCurrent = tagFilter.value;
     tagFilter.innerHTML = '<option value="">Все теги</option>' +
         tags.map(t => `<option value="${t}">${t}</option>`).join('');
     if (tags.includes(tagCurrent)) tagFilter.value = tagCurrent;
+
+    const collections = [...new Set(movies.map(m => m.collection).filter(Boolean))].sort();
+    const colFilter = document.getElementById('collectionFilter');
+    if (colFilter) {
+        const colCurrent = colFilter.value;
+        colFilter.innerHTML = '<option value="">Все коллекции</option>' +
+            collections.map(c => `<option value="${c}">${c}</option>`).join('');
+        if (collections.includes(colCurrent)) colFilter.value = colCurrent;
+    }
+
+    const collectionList = document.getElementById('collectionList');
+    if (collectionList) {
+        collectionList.innerHTML = collections.map(c => `<option value="${c}">`).join('');
+    }
 }
+
 function movieCardHTML(m) {
     const tagsHTML = (m.tags || []).slice(0, 2).map(t => `<span class="movie-tag">${t}</span>`).join('');
     const ratingHTML = m.rating > 0 ? formatRating(m.rating) : '—';
+    const collectionHTML = m.collection ? `<div class="movie-collection">📦 ${m.collection}</div>` : '';
+    const favoriteActive = m.favorite ? 'active' : '';
+    const favoriteIcon = m.favorite ? '❤️' : '🤍';
+
     return `
         <div class="movie-card" onclick="openMovieDetail(${m.id})">
             <span class="type-badge">${typeLabels[m.type] || '🎬'}</span>
+            <button class="favorite-btn ${favoriteActive}" onclick="event.stopPropagation(); toggleFavorite(${m.id})" title="Избранное">
+                ${favoriteIcon}
+            </button>
             ${m.poster 
                 ? `<img src="${m.poster}" class="movie-poster" alt="${m.title}" onerror="this.style.display='none'; this.parentElement.querySelector('.poster-fallback').style.display='flex'">` 
                 : ''}
-            <div class="movie-poster poster-fallback" style="${m.poster ? 'display:none' : ''}">🎬</div>
+            <div class="movie-poster poster-fallback" style="${m.poster ? 'display:none' : ''}"></div>
             <div class="movie-info">
                 <div class="movie-title">${m.title}</div>
                 <div class="movie-meta">
@@ -207,8 +292,11 @@ function movieCardHTML(m) {
                     <span class="movie-rating">${ratingHTML}</span>
                 </div>
                 <div class="movie-director">🎬 ${m.director || '—'}</div>
+                ${collectionHTML}
                 ${tagsHTML ? `<div class="movie-tags">${tagsHTML}</div>` : ''}
-                <span class="movie-status status-${m.status}">${statusLabels[m.status]}</span>
+                <span class="movie-status status-${m.status}" onclick="event.stopPropagation(); cycleStatus(${m.id})" title="Нажми чтобы изменить статус">
+                    ${statusLabels[m.status]}
+                </span>
             </div>
             <div class="movie-actions">
                 <button class="btn-delete" onclick="event.stopPropagation(); deleteMovie(${m.id})">Удалить</button>
@@ -216,19 +304,24 @@ function movieCardHTML(m) {
         </div>
     `;
 }
+
 function renderHome() {
     document.getElementById('homeTotal').textContent = movies.length;
     document.getElementById('homeWatched').textContent = movies.filter(m => m.status === 'watched').length;
     document.getElementById('homePlanned').textContent = movies.filter(m => m.status === 'planned').length;
     document.getElementById('homeWatching').textContent = movies.filter(m => m.status === 'watching').length;
+    document.getElementById('homeFavorites').textContent = movies.filter(m => m.favorite).length;
+    document.getElementById('homeFavorites').textContent = movies.filter(m => m.favorite).length;
     document.getElementById('plannedCount').textContent = movies.filter(m => m.status === 'planned').length;
     const rated = movies.filter(m => m.rating > 0);
     const avg = rated.length ? (rated.reduce((s, m) => s + m.rating, 0) / rated.length).toFixed(1) : '—';
     document.getElementById('homeRating').textContent = avg;
+
     const continueWatching = movies.filter(m => m.status === 'watching');
     document.getElementById('continueWatching').innerHTML = continueWatching.length
         ? continueWatching.map(movieCardHTML).join('')
         : '<p style="color:var(--text-secondary); padding:20px;">Нет фильмов «в процессе»</p>';
+
     const unfinished = movies.filter(m =>
         (m.type === 'series' || m.type === 'documentary') &&
         m.status === 'watching' &&
@@ -249,8 +342,9 @@ function renderHome() {
                 </div>
             `;
         }).join('')
-        : '<p style="color:var(--text-secondary); padding:20px;">Все сериалы досмотрены </p>';
+        : '<p style="color:var(--text-secondary); padding:20px;">Все сериалы досмотрены 🎉</p>';
 }
+
 function renderCatalog() {
     const catalog = document.getElementById('catalog');
     const search = document.getElementById('searchInput').value.toLowerCase();
@@ -258,28 +352,155 @@ function renderCatalog() {
     const genre = document.getElementById('genreFilter').value;
     const director = document.getElementById('directorFilter').value;
     const tag = document.getElementById('tagFilter').value;
+    const collection = document.getElementById('collectionFilter').value;
     const status = document.getElementById('statusFilter').value;
     const sort = document.getElementById('sortFilter').value;
+
     let filtered = movies.filter(m => {
         const searchStr = [
             m.title, m.director, m.actors, m.description,
-            ...(m.tags || []), m.genre
+            ...(m.tags || []), m.genre, m.collection || ''
         ].join(' ').toLowerCase();
         const matchSearch = !search || searchStr.includes(search);
         const matchType = !type || m.type === type;
         const matchGenre = !genre || (m.genre || '').includes(genre);
         const matchDirector = !director || m.director === director;
         const matchTag = !tag || (m.tags || []).includes(tag);
+        const matchCollection = !collection || m.collection === collection;
         const matchStatus = !status || m.status === status;
-        return matchSearch && matchType && matchGenre && matchDirector && matchTag && matchStatus;
+        return matchSearch && matchType && matchGenre && matchDirector && matchTag && matchCollection && matchStatus;
     });
+
     if (sort === 'rating') filtered.sort((a, b) => b.rating - a.rating);
     else if (sort === 'title') filtered.sort((a, b) => a.title.localeCompare(b.title));
     else filtered.sort((a, b) => b.id - a.id);
+
     catalog.innerHTML = filtered.length
         ? filtered.map(movieCardHTML).join('')
         : '<p style="color:var(--text-secondary); grid-column: 1/-1; text-align:center; padding:40px;">Ничего не найдено 😢</p>';
 }
+function renderFavorites() {
+    const catalog = document.getElementById('favoritesCatalog');
+    const favorites = movies.filter(m => m.favorite);
+
+    catalog.innerHTML = favorites.length
+        ? favorites.map(movieCardHTML).join('')
+        : '<p style="color:var(--text-secondary); grid-column:1/-1; text-align:center; padding:40px;">В избранном пока пусто ❤️</p>';
+}
+// ===== КОЛЛЕКЦИИ =====
+function getCollections() {
+    const collections = {};
+    movies.forEach(m => {
+        if (m.collection) {
+            if (!collections[m.collection]) collections[m.collection] = [];
+            collections[m.collection].push(m);
+        }
+    });
+    return collections;
+}
+
+function renderCollections() {
+    const grid = document.getElementById('collectionsGrid');
+    const collections = getCollections();
+    const collectionNames = Object.keys(collections).sort();
+
+    if (collectionNames.length === 0) {
+        grid.innerHTML = `
+            <div class="collection-empty-state">
+                <div class="empty-icon">📦</div>
+                <p>У тебя пока нет коллекций</p>
+                <p class="empty-hint">Создай первую коллекцию выше или добавь фильм с указанием коллекции</p>
+            </div>
+        `;
+        return;
+    }
+
+    grid.innerHTML = collectionNames.map(name => {
+        const moviesInCollection = collections[name];
+        const moviesHTML = moviesInCollection.map(m =>
+            `<span class="collection-movie-chip" onclick="openMovieDetail(${m.id})">${m.title}</span>`
+        ).join('');
+
+        return `
+            <div class="collection-card">
+                <div class="collection-card-header">
+                    <div class="collection-card-title">📦 ${name}</div>
+                    <button class="btn-delete-collection" onclick="deleteCollection('${name.replace(/'/g, "\\'")}')" title="Удалить коллекцию">🗑</button>
+                </div>
+                <div class="collection-card-count">${moviesInCollection.length} ${getMovieWord(moviesInCollection.length)}</div>
+                <div class="collection-card-movies">
+                    ${moviesHTML}
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function getMovieWord(count) {
+    if (count === 1) return 'фильм/сериал';
+    if (count >= 2 && count <= 4) return 'фильма/сериала';
+    return 'фильмов/сериалов';
+}
+
+function createCollection() {
+    const input = document.getElementById('newCollectionName');
+    const name = input.value.trim();
+    if (!name) return;
+
+    const collections = getCollections();
+    if (collections[name]) {
+        alert('Коллекция "' + name + '" уже существует!');
+        return;
+    }
+
+    alert('Коллекция "' + name + '" создана! Теперь при добавлении или редактировании фильма укажи эту коллекцию в поле "Коллекция".');
+    input.value = '';
+
+    updateAllFilters();
+    renderCollections();
+}
+
+async function deleteCollection(name) {
+    if (!confirm(`Удалить коллекцию "${name}"?\nФильмы не будут удалены, просто у них очистится поле коллекции.`)) return;
+
+    const moviesInCollection = movies.filter(m => m.collection === name);
+
+    for (const m of moviesInCollection) {
+        m.collection = '';
+        await fetch(`/api/movies/${m.id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(m)
+        });
+    }
+
+    moviesInCollection.forEach(m => {
+        const idx = movies.findIndex(x => x.id === m.id);
+        if (idx !== -1) movies[idx].collection = '';
+    });
+
+    renderHome();
+    renderCatalog();
+    renderCollections();
+    updateAllFilters();
+    if (!document.getElementById('analytics').classList.contains('hidden')) {
+        renderAnalytics();
+    }
+}
+
+function goToCollections() {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-page="collections"]').classList.add('active');
+    document.getElementById('home').classList.add('hidden');
+    document.getElementById('catalogPage').classList.add('hidden');
+    document.getElementById('analytics').classList.add('hidden');
+    document.getElementById('movieDetail').classList.add('hidden');
+    document.getElementById('profilePage').classList.add('hidden');
+    document.getElementById('collectionsPage').classList.remove('hidden');
+    document.getElementById('favoritesPage').classList.add('hidden');
+    renderCollections();
+}
+
 function goToCatalog(statusFilter = null) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('[data-page="catalog"]').classList.add('active');
@@ -288,8 +509,22 @@ function goToCatalog(statusFilter = null) {
     document.getElementById('analytics').classList.add('hidden');
     document.getElementById('movieDetail').classList.add('hidden');
     document.getElementById('profilePage').classList.add('hidden');
+    document.getElementById('collectionsPage').classList.add('hidden');
+    document.getElementById('favoritesPage').classList.add('hidden');
     if (statusFilter) document.getElementById('statusFilter').value = statusFilter;
     renderCatalog();
+}
+function goToFavorites() {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelector('[data-page="favorites"]').classList.add('active');
+    document.getElementById('home').classList.add('hidden');
+    document.getElementById('catalogPage').classList.add('hidden');
+    document.getElementById('collectionsPage').classList.add('hidden');
+    document.getElementById('analytics').classList.add('hidden');
+    document.getElementById('movieDetail').classList.add('hidden');
+    document.getElementById('profilePage').classList.add('hidden');
+    document.getElementById('favoritesPage').classList.remove('hidden');
+    renderFavorites();
 }
 function openMovieDetail(id) {
     const m = movies.find(m => m.id === id);
@@ -303,6 +538,12 @@ function openMovieDetail(id) {
             <div class="detail-tags">${m.tags.map(t => `<span class="detail-tag">${t}</span>`).join('')}</div>
            </div>`
         : '';
+    const collectionHTML = m.collection
+        ? `<div class="detail-section">
+            <h3>📦 Коллекция</h3>
+            <p>${m.collection}</p>
+           </div>`
+        : '';
     let seriesHTML = '';
     if ((m.type === 'series' || m.type === 'documentary') && m.episodes && m.seasons) {
         const total = m.episodes * m.seasons;
@@ -310,7 +551,7 @@ function openMovieDetail(id) {
         const percent = (watched / total) * 100;
         seriesHTML = `
             <div class="detail-section">
-                <h3> Прогресс просмотра</h3>
+                <h3>📊 Прогресс просмотра</h3>
                 <p>${watched} из ${total} серий (${m.seasons} сезон(ов) × ${m.episodes})</p>
                 <div class="progress-bar-detail">
                     <div class="progress-fill-detail" style="width:${percent}%"></div>
@@ -324,6 +565,9 @@ function openMovieDetail(id) {
             <p>${m.review}</p>
            </div>`
         : '';
+    const favoriteBtnText = m.favorite ? '❤️ В избранном' : '🤍 В избранное';
+    const favoriteBtnClass = m.favorite ? 'btn-favorite-detail active' : 'btn-favorite-detail';
+
     document.getElementById('movieDetail').innerHTML = `
         <button class="back-btn" onclick="closeMovieDetail()">← Назад</button>
         <div class="detail-grid">
@@ -342,15 +586,19 @@ function openMovieDetail(id) {
                     <span>🎬 ${m.director || '—'}</span>
                     ${m.duration ? `<span>⏱ ${m.duration} мин</span>` : ''}
                 </div>
-                <span class="detail-status status-${m.status}">${statusLabels[m.status]}</span>
+                <span class="detail-status status-${m.status}" onclick="cycleStatus(${m.id})" title="Нажми чтобы изменить статус">
+                    ${statusLabels[m.status]}
+                </span>
                 <div class="detail-rating">${ratingStars}</div>
                 ${m.actors ? `<div class="detail-section"><h3>🎭 Актёры</h3><p>${m.actors}</p></div>` : ''}
                 ${m.description ? `<div class="detail-section"><h3>📖 Описание</h3><p>${m.description}</p></div>` : ''}
+                ${collectionHTML}
                 ${tagsHTML}
                 ${seriesHTML}
                 ${reviewHTML}
                 <div class="detail-actions">
                     <button class="btn-edit" onclick="editMovie(${m.id})">✏️ Редактировать</button>
+                    <button class="${favoriteBtnClass}" onclick="toggleFavorite(${m.id})">${favoriteBtnText}</button>
                     <button class="btn-delete-detail" onclick="deleteMovieFromDetail(${m.id})">🗑 Удалить</button>
                 </div>
             </div>
@@ -360,9 +608,12 @@ function openMovieDetail(id) {
     document.getElementById('catalogPage').classList.add('hidden');
     document.getElementById('analytics').classList.add('hidden');
     document.getElementById('profilePage').classList.add('hidden');
+    document.getElementById('collectionsPage').classList.add('hidden');
     document.getElementById('movieDetail').classList.remove('hidden');
+    document.getElementById('favoritesPage').classList.add('hidden');
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
 function closeMovieDetail() {
     document.getElementById('movieDetail').classList.add('hidden');
     document.getElementById('home').classList.remove('hidden');
@@ -370,22 +621,96 @@ function closeMovieDetail() {
     document.querySelector('[data-page="home"]').classList.add('active');
     renderHome();
 }
+
+// ===== Переключение статуса =====
+async function cycleStatus(id) {
+    const m = movies.find(x => x.id === id);
+    if (!m) return;
+    const statusOrder = ['planned', 'watching', 'watched'];
+    const currentIndex = statusOrder.indexOf(m.status);
+    const nextStatus = statusOrder[(currentIndex + 1) % statusOrder.length];
+    m.status = nextStatus;
+
+    await fetch(`/api/movies/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(m)
+    });
+
+    renderHome();
+    renderCatalog();
+    updateAllFilters();
+    if (!document.getElementById('analytics').classList.contains('hidden')) renderAnalytics();
+    if (!document.getElementById('collectionsPage').classList.contains('hidden')) renderCollections();
+    if (!document.getElementById('movieDetail').classList.contains('hidden')) openMovieDetail(id);
+}
+async function toggleFavorite(id) {
+    const m = movies.find(x => x.id === id);
+    if (!m) return;
+    m.favorite = !m.favorite;
+
+    await fetch(`/api/movies/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(m)
+    });
+
+    renderHome();
+    renderCatalog();
+    renderFavorites();
+    updateAllFilters();
+    if (!document.getElementById('analytics').classList.contains('hidden')) renderAnalytics();
+    if (!document.getElementById('collectionsPage').classList.contains('hidden')) renderCollections();
+    if (!document.getElementById('favoritesPage').classList.contains('hidden')) renderFavorites();
+    if (!document.getElementById('movieDetail').classList.contains('hidden')) openMovieDetail(id);
+}
+// ===== Избранное =====
+async function toggleFavorite(id) {
+    const m = movies.find(x => x.id === id);
+    if (!m) return;
+    m.favorite = !m.favorite;
+
+    await fetch(`/api/movies/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(m)
+    });
+
+    renderHome();
+    renderCatalog();
+    updateAllFilters();
+    if (!document.getElementById('analytics').classList.contains('hidden')) renderAnalytics();
+    if (!document.getElementById('collectionsPage').classList.contains('hidden')) renderCollections();
+    if (!document.getElementById('movieDetail').classList.contains('hidden')) openMovieDetail(id);
+}
+
 async function deleteMovieFromDetail(id) {
     if (!confirm('Удалить?')) return;
     await fetch(`/api/movies/${id}`, { method: 'DELETE' });
-    fetchMovies();
+    movies = movies.filter(m => m.id !== id);
+    renderHome();
+    renderCatalog();
+    renderCollections();
+    updateAllFilters();
     closeMovieDetail();
 }
 
 async function deleteMovie(id) {
     if (!confirm('Удалить?')) return;
     await fetch(`/api/movies/${id}`, { method: 'DELETE' });
-    fetchMovies();
+    movies = movies.filter(m => m.id !== id);
+    renderHome();
+    renderCatalog();
+    renderCollections();
+    updateAllFilters();
+    if (!document.getElementById('analytics').classList.contains('hidden')) renderAnalytics();
 }
+
 // ===== Модальное окно =====
 let currentTags = [];
 let currentRating = 0;
 let editingId = null;
+
 function openModal() {
     currentTags = [];
     currentRating = 0;
@@ -397,37 +722,43 @@ function openModal() {
     document.getElementById('seriesFields').classList.add('hidden');
     document.getElementById('tmdbResults').innerHTML = '';
     document.getElementById('tmdbSearchInput').value = '';
-    // Разворачиваем форму при открытии модалки
+    document.getElementById('movieCollection').value = '';
+
     const wrapper = document.getElementById('manualFormWrapper');
     const btn = document.getElementById('toggleFormBtn');
-    wrapper.classList.remove('collapsed');
-    btn.classList.remove('collapsed');
+    wrapper.classList.add('collapsed');
+    btn.classList.add('collapsed');
+
     document.getElementById('modal').classList.remove('hidden');
 }
+
 function closeModal() {
     document.getElementById('modal').classList.add('hidden');
     editingId = null;
     currentTags = [];
     currentRating = 0;
 }
-// ===== Кнопка сворачивания/разворачивания формы =====
+
+// ===== Кнопка сворачивания =====
 document.getElementById('toggleFormBtn').addEventListener('click', () => {
     const wrapper = document.getElementById('manualFormWrapper');
     const btn = document.getElementById('toggleFormBtn');
     wrapper.classList.toggle('collapsed');
     btn.classList.toggle('collapsed');
 });
+
 document.getElementById('movieType').addEventListener('change', (e) => {
     const isSeries = e.target.value === 'series' || e.target.value === 'documentary';
     document.getElementById('seriesFields').classList.toggle('hidden', !isSeries);
 });
-// ===== TMDB =====
+
+// ===== TMDB Поиск =====
 async function searchTMDB() {
     const query = document.getElementById('tmdbSearchInput').value.trim();
     if (!query) return;
+
     const resultsBox = document.getElementById('tmdbResults');
     const btn = document.getElementById('tmdbSearchBtn');
-
     btn.disabled = true;
     btn.textContent = '...';
     resultsBox.innerHTML = '<div class="tmdb-loading">🔍 Ищем...</div>';
@@ -437,18 +768,33 @@ async function searchTMDB() {
         if (!response.ok) throw new Error('Ничего не найдено');
         const data = await response.json();
 
-        // Автозаполнение полей формы из ответа сервера
-        document.getElementById('movieTitle').value = data.title || '';
-        document.getElementById('movieYear').value = data.year || '';
-        document.getElementById('movieDirector').value = data.director || '';
-        document.getElementById('movieGenre').value = data.genre || '';
-        document.getElementById('movieActors').value = data.actors || '';
-        document.getElementById('movieDescription').value = data.description || '';
-        document.getElementById('moviePoster').value = data.poster || '';
+        const results = data.results || data;
+        if (!Array.isArray(results) || results.length === 0) {
+            resultsBox.innerHTML = '<div class="tmdb-empty">Ничего не найдено</div>';
+            return;
+        }
 
-        resultsBox.innerHTML = '<div class="tmdb-loading">✅ Данные заполнены!</div>';
-        setTimeout(() => { resultsBox.innerHTML = ''; }, 2000);
+        resultsBox.innerHTML = results.map(item => {
+            const title = item.title || item.name || 'Без названия';
+            const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+            const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
+            const posterUrl = item.poster_url || item.poster_path || '';
 
+            return `
+                <div class="tmdb-result-item" onclick='selectTMDBResult(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+                    <div class="tmdb-result-poster">
+                        ${posterUrl ? `<img src="${posterUrl}" alt="${title}">` : '🎬'}
+                    </div>
+                    <div class="tmdb-result-info">
+                        <div class="tmdb-result-title">${title}</div>
+                        <div class="tmdb-result-meta">
+                            ${year || '—'}
+                            <span class="tmdb-result-type">${mediaType === 'movie' ? 'Фильм' : 'Сериал'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     } catch (err) {
         resultsBox.innerHTML = `<div class="tmdb-empty">${err.message}</div>`;
     } finally {
@@ -456,54 +802,36 @@ async function searchTMDB() {
         btn.textContent = 'Найти';
     }
 }
-async function selectTMDBResult(encodedJson) {
-    const item = JSON.parse(encodedJson);
-    const mediaType = item._mediaType;
-    const id = item.id;
-    const resultsBox = document.getElementById('tmdbResults');
-    resultsBox.innerHTML = '<div class="tmdb-loading">📥 Загружаем детали...</div>';
-    try {
-        const [detailsRes, creditsRes] = await Promise.all([
-            fetch(`${TMDB_BASE}/${mediaType}/${id}?api_key=${TMDB_API_KEY}&language=ru-RU`),
-            fetch(`${TMDB_BASE}/${mediaType}/${id}/credits?api_key=${TMDB_API_KEY}&language=ru-RU`)
-        ]);
-        const details = await detailsRes.json();
-        const credits = await creditsRes.json();
-        document.getElementById('movieType').value = mediaType === 'movie' ? 'movie' : 'series';
-        document.getElementById('movieTitle').value = details.title || details.name || '';
-        document.getElementById('movieYear').value = (details.release_date || details.first_air_date || '').slice(0, 4);
-        let director = '';
-        if (mediaType === 'movie') {
-            const dir = (credits.crew || []).find(c => c.job === 'Director');
-            director = dir ? dir.name : '';
-        } else {
-            director = (details.created_by || []).map(c => c.name).join(', ');
-        }
-        document.getElementById('movieDirector').value = director || 'Не указан';
-        document.getElementById('movieGenre').value = (details.genres || []).map(g => g.name).join(', ');
-        document.getElementById('movieActors').value = (credits.cast || []).slice(0, 5).map(a => a.name).join(', ');
-        document.getElementById('moviePoster').value = details.poster_path ? TMDB_IMG + details.poster_path : '';
-        document.getElementById('movieDescription').value = details.overview || '';
-        if (mediaType === 'movie' && details.runtime) {
-            document.getElementById('movieDuration').value = details.runtime;
-        } else if (mediaType === 'tv' && details.episode_run_time?.length) {
-            document.getElementById('movieDuration').value = details.episode_run_time[0];
-        }
-        if (mediaType === 'tv') {
-            document.getElementById('seriesFields').classList.remove('hidden');
-            document.getElementById('movieSeasons').value = details.number_of_seasons || 1;
-            document.getElementById('movieEpisodes').value = details.number_of_episodes
-                ? Math.round(details.number_of_episodes / (details.number_of_seasons || 1))
-                : 10;
-            document.getElementById('movieWatchedEpisodes').value = 0;
-        }
-        resultsBox.innerHTML = '<div class="tmdb-loading">✅ Данные заполнены! Проверь поля ниже</div>';
-        setTimeout(() => { resultsBox.innerHTML = ''; }, 2000);
-    } catch (err) {
-        console.error(err);
-        resultsBox.innerHTML = '<div class="tmdb-empty">Ошибка загрузки</div>';
+
+function selectTMDBResult(item) {
+    const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
+
+    document.getElementById('movieType').value = mediaType === 'movie' ? 'movie' : 'series';
+    document.getElementById('movieTitle').value = item.title || item.name || '';
+    document.getElementById('movieYear').value = (item.release_date || item.first_air_date || '').slice(0, 4);
+    document.getElementById('movieDirector').value = item.director || '';
+    document.getElementById('movieGenre').value = item.genre || '';
+    document.getElementById('movieActors').value = item.actors || '';
+    document.getElementById('moviePoster').value = item.poster_url || item.poster_path || '';
+    document.getElementById('movieDescription').value = item.overview || '';
+    document.getElementById('movieCollection').value = '';
+
+    if (mediaType === 'tv' || mediaType === 'series') {
+        document.getElementById('seriesFields').classList.remove('hidden');
+        document.getElementById('movieSeasons').value = item.number_of_seasons || 1;
+        document.getElementById('movieEpisodes').value = item.number_of_episodes
+            ? Math.round(item.number_of_episodes / (item.number_of_seasons || 1))
+            : 10;
+        document.getElementById('movieWatchedEpisodes').value = 0;
+    } else {
+        document.getElementById('seriesFields').classList.add('hidden');
     }
+
+    const resultsBox = document.getElementById('tmdbResults');
+    resultsBox.innerHTML = '<div class="tmdb-loading">✅ Данные заполнены! Проверь поля ниже</div>';
+    setTimeout(() => { resultsBox.innerHTML = ''; }, 2000);
 }
+
 document.getElementById('tmdbSearchBtn').addEventListener('click', searchTMDB);
 document.getElementById('tmdbSearchInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
@@ -511,16 +839,19 @@ document.getElementById('tmdbSearchInput').addEventListener('keydown', (e) => {
         searchTMDB();
     }
 });
+
 // ===== Теги =====
 function renderTags() {
     document.getElementById('tagsContainer').innerHTML = currentTags
         .map((t, i) => `<span class="tag-chip">${t} <button type="button" onclick="removeTag(${i})">×</button></span>`)
         .join('');
 }
+
 function removeTag(index) {
     currentTags.splice(index, 1);
     renderTags();
 }
+
 document.getElementById('tagInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
@@ -532,6 +863,7 @@ document.getElementById('tagInput').addEventListener('keydown', (e) => {
         e.target.value = '';
     }
 });
+
 // ===== Звёзды =====
 function updateStarDisplay(rating) {
     document.querySelectorAll('#starRating span').forEach(star => {
@@ -539,6 +871,7 @@ function updateStarDisplay(rating) {
         star.classList.toggle('active', val <= rating);
     });
 }
+
 document.querySelectorAll('#starRating span').forEach(star => {
     star.addEventListener('click', () => {
         currentRating = parseInt(star.dataset.star);
@@ -546,7 +879,9 @@ document.querySelectorAll('#starRating span').forEach(star => {
     });
     star.addEventListener('mouseenter', () => updateStarDisplay(parseInt(star.dataset.star)));
 });
+
 document.getElementById('starRating').addEventListener('mouseleave', () => updateStarDisplay(currentRating));
+
 // ===== Редактирование =====
 function editMovie(id) {
     const m = movies.find(x => x.id === id);
@@ -564,8 +899,10 @@ function editMovie(id) {
     document.getElementById('moviePoster').value = m.poster || '';
     document.getElementById('movieDescription').value = m.description || '';
     document.getElementById('movieDuration').value = m.duration || '';
+    document.getElementById('movieCollection').value = m.collection || '';
     document.getElementById('movieStatus').value = m.status;
     document.getElementById('movieReview').value = m.review || '';
+
     if (m.type === 'series' || m.type === 'documentary') {
         document.getElementById('seriesFields').classList.remove('hidden');
         document.getElementById('movieSeasons').value = m.seasons || 1;
@@ -574,13 +911,14 @@ function editMovie(id) {
     } else {
         document.getElementById('seriesFields').classList.add('hidden');
     }
+
     renderTags();
     updateStarDisplay(currentRating);
     document.getElementById('modal').classList.remove('hidden');
 }
+
 // ===== Отправка формы =====
-document.getElementById('addForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+document.getElementById('saveBtn').addEventListener('click', async () => {
     const type = document.getElementById('movieType').value;
     const isSeries = type === 'series' || type === 'documentary';
 
@@ -594,6 +932,7 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
         poster: document.getElementById('moviePoster').value,
         description: document.getElementById('movieDescription').value,
         duration: parseInt(document.getElementById('movieDuration').value) || 0,
+        collection: document.getElementById('movieCollection').value.trim(),
         tags: [...currentTags],
         status: document.getElementById('movieStatus').value,
         rating: currentRating,
@@ -606,24 +945,42 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
         data.watchedEpisodes = parseInt(document.getElementById('movieWatchedEpisodes').value) || 0;
     }
 
-    if (editingId) {
-        await fetch(`/api/movies/${editingId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-    } else {
-        await fetch('/api/movies', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-    }
+    try {
+        if (editingId) {
+            const response = await fetch(`/api/movies/${editingId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                const updatedMovie = await response.json();
+                const index = movies.findIndex(m => m.id === editingId);
+                if (index !== -1) movies[index] = updatedMovie;
+            }
+        } else {
+            const response = await fetch('/api/movies', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            if (response.ok) {
+                const newMovie = await response.json();
+                movies.unshift(newMovie);
+            }
+        }
 
-    fetchMovies();
-    closeModal();
-    e.target.reset();
+        renderHome();
+        renderCatalog();
+        renderCollections();
+        updateAllFilters();
+        if (!document.getElementById('analytics').classList.contains('hidden')) renderAnalytics();
+
+        closeModal();
+    } catch (err) {
+        alert('Ошибка сохранения: ' + err.message);
+    }
 });
+
 // ===== Навигация =====
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -637,21 +994,33 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
             document.querySelector(`[data-page="${currentPage}"]`).classList.add('active');
             return;
         }
+        if (page === 'collections') {
+            goToCollections();
+            return;
+        }
+        if (page === 'favorites') {
+            goToFavorites();
+            return;
+        }
         document.getElementById('home').classList.toggle('hidden', page !== 'home');
         document.getElementById('catalogPage').classList.toggle('hidden', page !== 'catalog');
         document.getElementById('analytics').classList.toggle('hidden', page !== 'analytics');
         document.getElementById('movieDetail').classList.add('hidden');
         document.getElementById('profilePage').classList.add('hidden');
+        document.getElementById('collectionsPage').classList.add('hidden');
         if (page === 'analytics') renderAnalytics();
         if (page === 'home') renderHome();
     });
 });
+
 // ===== Аналитика =====
 let genreChartInstance = null;
 let typeChartInstance = null;
+
 function renderAnalytics() {
     document.getElementById('totalCount').textContent = movies.length;
     document.getElementById('watchedCount').textContent = movies.filter(m => m.status === 'watched').length;
+    document.getElementById('favoritesCount').textContent = movies.filter(m => m.favorite).length;
     const totalMinutes = movies.filter(m => m.status === 'watched').reduce((sum, m) => sum + (m.duration || 0), 0);
     document.getElementById('hoursMonth').textContent = Math.round(totalMinutes / 60 / 12 * 10) / 10;
     const totalWatchedEpisodes = movies
@@ -661,6 +1030,7 @@ function renderAnalytics() {
     const rated = movies.filter(m => m.rating > 0);
     const avg = rated.length ? (rated.reduce((s, m) => s + m.rating, 0) / rated.length).toFixed(1) : '0';
     document.getElementById('avgRating').textContent = avg;
+
     const genreCount = {};
     movies.forEach(m => {
         (m.genre || '').split(',').forEach(g => {
@@ -669,17 +1039,20 @@ function renderAnalytics() {
         });
     });
     drawPieChart('genrePieChart', genreCount, (inst) => genreChartInstance = inst, genreChartInstance);
+
     const typeCount = {};
     movies.forEach(m => {
         const label = typeLabels[m.type] || 'Другое';
         typeCount[label] = (typeCount[label] || 0) + 1;
     });
     drawPieChart('typePieChart', typeCount, (inst) => typeChartInstance = inst, typeChartInstance);
+
     const directorCount = {};
     movies.forEach(m => { if (m.director) directorCount[m.director] = (directorCount[m.director] || 0) + 1; });
     renderBarChart('directorChart', directorCount);
     renderUnfinishedReport();
 }
+
 function drawPieChart(canvasId, dataObj, setInstance, existingInstance) {
     const ctx = document.getElementById(canvasId).getContext('2d');
     if (existingInstance) existingInstance.destroy();
@@ -709,6 +1082,7 @@ function drawPieChart(canvasId, dataObj, setInstance, existingInstance) {
     });
     setInstance(instance);
 }
+
 function renderBarChart(elementId, dataObject) {
     const container = document.getElementById(elementId);
     const entries = Object.entries(dataObject).sort((a, b) => b[1] - a[1]);
@@ -725,6 +1099,7 @@ function renderBarChart(elementId, dataObject) {
         </div>
     `).join('');
 }
+
 function renderUnfinishedReport() {
     const container = document.getElementById('unfinishedReport');
     const unfinished = movies.filter(m => {
@@ -738,10 +1113,12 @@ function renderUnfinishedReport() {
         const watched = m.watchedEpisodes || 0;
         return { ...m, total, watched, left: total - watched, percent: (watched / total) * 100 };
     }).sort((a, b) => a.percent - b.percent);
+
     if (!unfinished.length) {
         container.innerHTML = '<p style="color:var(--text-secondary); padding:20px;">Все сериалы досмотрены 🎉</p>';
         return;
     }
+
     container.innerHTML = unfinished.map(m => {
         const severity = m.percent < 30 ? 'danger' : 'warning';
         const emoji = m.percent < 30 ? '🔴' : '🟡';
@@ -754,15 +1131,21 @@ function renderUnfinishedReport() {
         `;
     }).join('');
 }
+
 // ===== Фильтры =====
-['searchInput', 'typeFilter', 'genreFilter', 'directorFilter', 'tagFilter', 'statusFilter', 'sortFilter']
-    .forEach(id => document.getElementById(id).addEventListener('input', renderCatalog));
+['searchInput', 'typeFilter', 'genreFilter', 'directorFilter', 'tagFilter', 'collectionFilter', 'statusFilter', 'sortFilter']
+    .forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('input', renderCatalog);
+    });
+
 document.getElementById('homeSearch').addEventListener('input', (e) => {
     if (e.target.value.length > 0) {
         document.getElementById('searchInput').value = e.target.value;
         goToCatalog();
     }
 });
+
 // ===== Тема =====
 const themeToggle = document.getElementById('themeToggle');
 themeToggle.addEventListener('click', () => {
@@ -776,6 +1159,7 @@ themeToggle.addEventListener('click', () => {
         renderAnalytics();
     }
 });
+
 // ===== Профиль =====
 function showProfile() {
     document.getElementById('userDropdown').classList.add('hidden');
@@ -783,56 +1167,50 @@ function showProfile() {
     document.getElementById('catalogPage').classList.add('hidden');
     document.getElementById('analytics').classList.add('hidden');
     document.getElementById('movieDetail').classList.add('hidden');
+    document.getElementById('collectionsPage').classList.add('hidden');
     document.getElementById('profilePage').classList.remove('hidden');
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
     document.getElementById('profileAvatar').textContent = currentUser.displayName.charAt(0).toUpperCase();
     document.getElementById('profileName').textContent = currentUser.displayName;
     document.getElementById('profileLogin').textContent = currentUser.username;
     document.getElementById('profileSince').textContent = new Date(currentUser.createdAt).toLocaleDateString('ru-RU');
     document.getElementById('profileTotal').textContent = movies.length;
     document.getElementById('profileWatched').textContent = movies.filter(m => m.status === 'watched').length;
+    document.getElementById('profileFavorites').textContent = movies.filter(m => m.favorite).length;
     const rated = movies.filter(m => m.rating > 0);
     const avg = rated.length ? (rated.reduce((s, m) => s + m.rating, 0) / rated.length).toFixed(1) : '—';
     document.getElementById('profileRating').textContent = avg;
+    document.getElementById('favoritesPage').classList.add('hidden');
 }
+
 function closeProfile() {
     document.getElementById('profilePage').classList.add('hidden');
     document.getElementById('home').classList.remove('hidden');
     document.querySelector('[data-page="home"]').classList.add('active');
     renderHome();
 }
+
 function editProfile() {
     document.getElementById('editDisplayName').value = currentUser.displayName;
     document.getElementById('profileModal').classList.remove('hidden');
 }
+
 function closeProfileModal() {
     document.getElementById('profileModal').classList.add('hidden');
 }
+
 document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     const newName = document.getElementById('editDisplayName').value.trim();
     if (newName.length < 2) return;
-
     await fetch('/api/profile', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ displayName: newName })
     });
-
     currentUser.displayName = newName;
     updateUserUI();
     showProfile();
     closeProfileModal();
 });
-// ===== Инициализация при загрузке =====
-(function init() {
-    const savedUser = localStorage.getItem(LS_CURRENT);
-    const users = getUsers();
-    if (savedUser && users[savedUser]) {
-        loginUser(savedUser);
-    } else {
-        // Показываем экран авторизации
-        document.getElementById('authScreen').classList.remove('hidden');
-        document.getElementById('app').classList.add('hidden');
-    }
-})();

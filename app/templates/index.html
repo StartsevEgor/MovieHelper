@@ -13,19 +13,16 @@
         <div class="auth-container">
             <div class="auth-logo">🎬 MovieHelper</div>
             <p class="auth-subtitle">Твой личный каталог фильмов и сериалов</p>
-            <!-- Табы -->
             <div class="auth-tabs">
                 <button class="auth-tab active" data-tab="login">Вход</button>
                 <button class="auth-tab" data-tab="register">Регистрация</button>
             </div>
-            <!-- Форма входа -->
             <form id="loginForm" class="auth-form">
                 <input type="text" id="loginUsername" placeholder="Логин" required autocomplete="username">
                 <input type="password" id="loginPassword" placeholder="Пароль" required autocomplete="current-password">
                 <div id="loginError" class="auth-error hidden"></div>
                 <button type="submit" class="auth-btn">Войти</button>
             </form>
-            <!-- Форма регистрации -->
             <form id="registerForm" class="auth-form hidden">
                 <input type="text" id="registerUsername" placeholder="Логин (латиница, 3+ символа)" required autocomplete="username">
                 <input type="text" id="registerDisplayName" placeholder="Как тебя зовут?" required>
@@ -44,6 +41,8 @@
             <nav class="nav">
                 <button class="nav-btn active" data-page="home">Главная</button>
                 <button class="nav-btn" data-page="catalog">Каталог</button>
+                <button class="nav-btn" data-page="collections">Коллекции</button>
+                <button class="nav-btn" data-page="favorites">Избранное</button>
                 <button class="nav-btn" data-page="analytics">Аналитика</button>
                 <button class="nav-btn" data-page="add">+ Добавить</button>
             </nav>
@@ -51,7 +50,7 @@
                 <button id="userBtn" class="user-btn">
                     <span class="user-avatar" id="userAvatar">?</span>
                     <span class="user-name" id="userName">—</span>
-                    <span class="user-caret">▾</span>
+                    <span class="user-caret"></span>
                 </button>
                 <div id="userDropdown" class="user-dropdown hidden">
                     <div class="user-dropdown-header">
@@ -62,7 +61,7 @@
                         </div>
                     </div>
                     <hr class="user-dropdown-divider">
-                    <button class="user-dropdown-item" onclick="showProfile()">👤 Профиль</button>
+                    <button class="user-dropdown-item" onclick="showProfile()"> Профиль</button>
                     <button class="user-dropdown-item" onclick="logout()">🚪 Выйти</button>
                 </div>
             </div>
@@ -92,6 +91,10 @@
                     <div class="stat-box">
                         <div class="stat-box-value" id="homeWatching">0</div>
                         <div class="stat-box-label">В процессе</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-box-value" id="homeFavorites">0</div>
+                        <div class="stat-box-label">Избранное</div>
                     </div>
                     <div class="stat-box">
                         <div class="stat-box-value" id="homeRating">—</div>
@@ -144,6 +147,9 @@
                 <select id="tagFilter" class="filter-select">
                     <option value="">Все теги</option>
                 </select>
+                <select id="collectionFilter" class="filter-select">
+                    <option value="">Все коллекции</option>
+                </select>
                 <select id="statusFilter" class="filter-select">
                     <option value="">Все статусы</option>
                     <option value="watched">Просмотрено</option>
@@ -157,6 +163,22 @@
                 </select>
             </section>
             <main id="catalog" class="catalog"></main>
+        </section>
+        <!-- ===== КОЛЛЕКЦИИ ===== -->
+        <section id="collectionsPage" class="collections-page hidden">
+            <div class="collections-header">
+                <h2> Мои коллекции</h2>
+                <div class="collections-create">
+                    <input type="text" id="newCollectionName" placeholder="Название новой коллекции..." class="collection-input">
+                    <button class="btn-create-collection" onclick="createCollection()">Создать</button>
+                </div>
+            </div>
+            <div id="collectionsGrid" class="collections-grid"></div>
+        </section>
+        <!-- ===== ИЗБРАННОЕ ===== -->
+        <section id="favoritesPage" class="hidden">
+            <h2 class="page-title">Избранное</h2>
+            <main id="favoritesCatalog" class="catalog"></main>
         </section>
         <!-- ===== ДЕТАЛЬНАЯ ===== -->
         <section id="movieDetail" class="movie-detail hidden"></section>
@@ -178,13 +200,17 @@
                         <div class="profile-stat-label">Просмотрено</div>
                     </div>
                     <div class="profile-stat">
+                        <div class="profile-stat-value" id="profileFavorites">0</div>
+                        <div class="profile-stat-label">Избранное</div>
+                    </div>
+                    <div class="profile-stat">
                         <div class="profile-stat-value" id="profileRating">—</div>
                         <div class="profile-stat-label">Средний рейтинг</div>
                     </div>
                 </div>
                 <div class="profile-actions">
                     <button class="btn-edit" onclick="editProfile()">✏️ Изменить имя</button>
-                    <button class="btn-delete-detail" onclick="logout()">🚪 Выйти</button>
+                    <button class="btn-delete-detail" onclick="logout()"> Выйти</button>
                 </div>
             </div>
         </section>
@@ -199,6 +225,10 @@
                 <div class="stat-card">
                     <div class="stat-value" id="watchedCount">0</div>
                     <div class="stat-label">Просмотрено</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="favoritesCount">0</div>
+                    <div class="stat-label">Избранное</div>
                 </div>
                 <div class="stat-card">
                     <div class="stat-value" id="hoursMonth">0</div>
@@ -231,27 +261,26 @@
         <!-- ===== МОДАЛЬНОЕ ОКНО ===== -->
         <div id="modal" class="modal hidden">
             <div class="modal-content">
-                <h2 id="modalTitle">Добавить</h2>
+                <div class="modal-header">
+                    <h2 id="modalTitle">Добавить</h2>
+                    <button type="button" class="toggle-form-btn collapsed" id="toggleFormBtn" title="Свернуть/развернуть форму">
+                        <span class="toggle-icon">▼</span>
+                    </button>
+                </div>
                 <div class="tmdb-search-block">
-                    <label class="small-label"> Найти в базе TMDB</label>
+                    <label class="small-label">Найти в базе TMDB</label>
                     <div class="tmdb-search-row">
                         <input type="text" id="tmdbSearchInput" placeholder="Введите название..." class="tmdb-search-field">
                         <button type="button" id="tmdbSearchBtn" class="btn-tmdb">Найти</button>
                     </div>
                     <div id="tmdbResults" class="tmdb-results"></div>
                 </div>
-                <div class="divider">
-                    <span>или заполни вручную</span>
-                    <button type="button" class="toggle-form-btn" id="toggleFormBtn" title="Свернуть/развернуть">
-                        <span class="toggle-icon">▼</span>
-                    </button>
-                </div>
-                <div id="manualFormWrapper" class="manual-form-wrapper">
+                <div id="manualFormWrapper" class="manual-form-wrapper collapsed">
                     <form id="addForm">
                         <select id="movieType">
                             <option value="movie">🎬 Фильм</option>
-                            <option value="series">📺 Сериал</option>
-                            <option value="documentary"> Документальный</option>
+                            <option value="series"> Сериал</option>
+                            <option value="documentary">🎥 Документальный</option>
                         </select>
                         <input type="text" id="movieTitle" placeholder="Название" required>
                         <input type="number" id="movieYear" placeholder="Год" required>
@@ -275,15 +304,17 @@
                             </div>
                         </div>
                         <input type="number" id="movieDuration" placeholder="Длительность (минут)">
+                        <input type="text" id="movieCollection" placeholder="Коллекция (например: Marvel, Трилогия)" list="collectionList">
+                        <datalist id="collectionList"></datalist>
                         <div class="tags-input-wrap">
                             <label class="small-label">Теги (Enter для добавления)</label>
                             <div id="tagsContainer" class="tags-container"></div>
                             <input type="text" id="tagInput" placeholder="Например: Для вечера с семьёй" class="tag-input">
                         </div>
                         <select id="movieStatus">
-                            <option value="planned">В планах</option>
-                            <option value="watching">В процессе</option>
                             <option value="watched">Просмотрено</option>
+                            <option value="watching">В процессе</option>
+                            <option value="planned">В планах</option>
                         </select>
                         <div class="rating-wrap">
                             <label class="small-label">Оценка (1–5 звёзд)</label>
@@ -296,11 +327,11 @@
                             </div>
                         </div>
                         <textarea id="movieReview" placeholder="Рецензия (необязательно)" rows="3"></textarea>
-                        <div class="modal-actions">
-                            <button type="button" class="btn-cancel" onclick="closeModal()">Отмена</button>
-                            <button type="submit" class="btn-save">Сохранить</button>
-                        </div>
                     </form>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-cancel" onclick="closeModal()">Отмена</button>
+                    <button type="button" class="btn-save" id="saveBtn">Сохранить</button>
                 </div>
             </div>
         </div>
