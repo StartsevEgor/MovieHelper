@@ -10,6 +10,22 @@ def index():
     return render_template('index.html')
 
 
+from app.api_clients import fetch_movie_data
+
+
+@main.route('/api/search', methods=['GET'])
+def search_external():
+    query = request.args.get('q')
+    if not query:
+        return jsonify({'error': 'Пустой запрос'}), 400
+
+    data = fetch_movie_data(query)
+    if data:
+        return jsonify(data)
+
+    return jsonify({'error': 'Ничего не найдено'}), 404
+
+
 @main.route('/api/movies', methods=['GET'])
 def get_movies():
     movies = Movie.query.all()

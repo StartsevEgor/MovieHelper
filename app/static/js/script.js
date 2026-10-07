@@ -316,6 +316,36 @@ function editMovie(id) {
 }
 
 // ===== Добавление / Сохранение =====
+async function searchMovieExternal() {
+    const query = document.getElementById('externalSearchInput').value;
+    if (!query) return;
+
+    const btn = document.querySelector('.search-external-group button');
+    btn.textContent = 'Ищем...';
+
+    try {
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error('Фильм не найден');
+
+        const data = await response.json();
+
+        // Заполнение полей формы
+        document.getElementById('movieTitle').value = data.title || '';
+        document.getElementById('movieYear').value = data.year || '';
+        document.getElementById('movieDirector').value = data.director || '';
+        document.getElementById('movieGenre').value = data.genre || '';
+        document.getElementById('movieActors').value = data.actors || '';
+        document.getElementById('movieDescription').value = data.description || '';
+        document.getElementById('moviePoster').value = data.poster || '';
+        document.getElementById('movieImdbId').value = data.imdb_id || '';
+
+    } catch (error) {
+        alert(error.message);
+    } finally {
+        btn.textContent = 'Найти';
+    }
+}
+
 document.getElementById('addForm').addEventListener('submit', async (e) => {
     e.preventDefault();
 
@@ -328,7 +358,8 @@ document.getElementById('addForm').addEventListener('submit', async (e) => {
         poster: document.getElementById('moviePoster').value,
         description: document.getElementById('movieDescription').value,
         status: document.getElementById('movieStatus').value,
-        rating: parseInt(document.getElementById('movieRating').value) || 0
+        rating: parseInt(document.getElementById('movieRating').value) || 0,
+        imdb_id: document.getElementById('movieImdbId').value || null // Новое поле
     };
 
     if (editingId) {

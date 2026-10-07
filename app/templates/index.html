@@ -160,7 +160,12 @@
     <div id="modal" class="modal hidden">
         <div class="modal-content">
             <h2 id="modalTitle">Добавить фильм</h2>
+            <div class="search-external-group" style="display: flex; gap: 10px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border);">
+                <input type="text" id="externalSearchInput" placeholder="Найти фильм в интернете..." style="flex: 1;">
+                <button type="button" class="btn-save" onclick="searchMovieExternal()">Найти</button>
+            </div>
             <form id="addForm">
+                <input type="hidden" id="movieImdbId">
                 <input type="text" id="movieTitle" placeholder="Название" required>
                 <input type="number" id="movieYear" placeholder="Год" required>
                 <input type="text" id="movieDirector" placeholder="Режиссёр" required>
