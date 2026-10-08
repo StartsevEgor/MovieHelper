@@ -1291,7 +1291,13 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
-.tmdb-result-meta { font-size: 12px; color: var(--text-secondary); }
+.tmdb-result-meta {
+    font-size: 12px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
 .tmdb-result-type {
     display: inline-block;
     background: var(--tag-bg);
@@ -1301,7 +1307,6 @@ body {
     font-size: 10px;
     font-weight: 600;
     text-transform: uppercase;
-    margin-left: 6px;
 }
 .tmdb-loading, .tmdb-empty {
     text-align: center;
