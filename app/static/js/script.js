@@ -765,8 +765,11 @@ document.getElementById('movieType').addEventListener('change', (e) => {
 });
 
 // ===== TMDB Поиск =====
-async function searchTMDB() {
-    const query = document.getElementById('tmdbSearchInput').value.trim();
+// ===== TMDB Поиск =====
+let searchTimeout = null;
+
+async function searchTMDB(queryStr = null) {
+    const query = queryStr || document.getElementById('tmdbSearchInput').value.trim();
     if (!query) return;
 
     const resultsBox = document.getElementById('tmdbResults');
@@ -780,6 +783,7 @@ async function searchTMDB() {
         if (!response.ok) throw new Error('Ничего не найдено');
         const data = await response.json();
 
+        // Бэкенд возвращает готовый список словарей, берем его напрямую
         const results = data.results || data;
         if (!Array.isArray(results) || results.length === 0) {
             resultsBox.innerHTML = '<div class="tmdb-empty">Ничего не найдено</div>';
@@ -787,10 +791,11 @@ async function searchTMDB() {
         }
 
         resultsBox.innerHTML = results.map(item => {
-            const title = item.title || item.name || 'Без названия';
-            const year = (item.release_date || item.first_air_date || '').slice(0, 4);
-            const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
-            const posterUrl = item.poster_url || item.poster_path || '';
+            // Используем унифицированные ключи от нашего Flask-бэкенда
+            const title = item.title || 'Без названия';
+            const year = item.year || '—';
+            const posterUrl = item.poster || '';
+            const sourceInfo = item.source === 'merged' ? 'TMDB и кинопоиск' : (item.source || 'api');
 
             return `
                 <div class="tmdb-result-item" onclick='selectTMDBResult(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
@@ -800,8 +805,8 @@ async function searchTMDB() {
                     <div class="tmdb-result-info">
                         <div class="tmdb-result-title">${title}</div>
                         <div class="tmdb-result-meta">
-                            ${year || '—'}
-                            <span class="tmdb-result-type">${mediaType === 'movie' ? 'Фильм' : 'Сериал'}</span>
+                            ${year}
+                            <span class="tmdb-result-type">${sourceInfo}</span>
                         </div>
                     </div>
                 </div>
@@ -816,39 +821,48 @@ async function searchTMDB() {
 }
 
 function selectTMDBResult(item) {
-    const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
-
-    document.getElementById('movieType').value = mediaType === 'movie' ? 'movie' : 'series';
-    document.getElementById('movieTitle').value = item.title || item.name || '';
-    document.getElementById('movieYear').value = (item.release_date || item.first_air_date || '').slice(0, 4);
+    // Подставляем унифицированные данные из бэкенда в форму
+    document.getElementById('movieTitle').value = item.title || '';
+    document.getElementById('movieYear').value = item.year || '';
     document.getElementById('movieDirector').value = item.director || '';
     document.getElementById('movieGenre').value = item.genre || '';
     document.getElementById('movieActors').value = item.actors || '';
-    document.getElementById('moviePoster').value = item.poster_url || item.poster_path || '';
-    document.getElementById('movieDescription').value = item.overview || '';
+    document.getElementById('moviePoster').value = item.poster || '';
+    document.getElementById('movieDescription').value = item.description || '';
+    document.getElementById('movieDuration').value = item.duration || ''; // <-- Добавленная строка
     document.getElementById('movieCollection').value = '';
-
-    if (mediaType === 'tv' || mediaType === 'series') {
-        document.getElementById('seriesFields').classList.remove('hidden');
-        document.getElementById('movieSeasons').value = item.number_of_seasons || 1;
-        document.getElementById('movieEpisodes').value = item.number_of_episodes
-            ? Math.round(item.number_of_episodes / (item.number_of_seasons || 1))
-            : 10;
-        document.getElementById('movieWatchedEpisodes').value = 0;
-    } else {
-        document.getElementById('seriesFields').classList.add('hidden');
-    }
 
     const resultsBox = document.getElementById('tmdbResults');
     resultsBox.innerHTML = '<div class="tmdb-loading">✅ Данные заполнены! Проверь поля ниже</div>';
     setTimeout(() => { resultsBox.innerHTML = ''; }, 2000);
 }
 
-document.getElementById('tmdbSearchBtn').addEventListener('click', searchTMDB);
+// Обработчик кнопки ручного поиска
+document.getElementById('tmdbSearchBtn').addEventListener('click', () => searchTMDB());
+
+// ===== Автоматический поиск при вводе (Debounce) =====
+document.getElementById('tmdbSearchInput').addEventListener('input', (e) => {
+    const query = e.target.value.trim();
+
+    // Сбрасываем таймер, если пользователь продолжает писать
+    clearTimeout(searchTimeout);
+
+    if (query.length < 3) {
+        document.getElementById('tmdbResults').innerHTML = '';
+        return;
+    }
+
+    // Ждем 600 мс после последнего нажатия клавиши и делаем асинхронный фоновый запрос
+    searchTimeout = setTimeout(() => {
+        searchTMDB(query);
+    }, 600);
+});
+
 document.getElementById('tmdbSearchInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         e.preventDefault();
-        searchTMDB();
+        clearTimeout(searchTimeout);
+        searchTMDB(e.target.value.trim());
     }
 });
 
