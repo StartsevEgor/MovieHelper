@@ -211,6 +211,17 @@ function formatRating(rating) {
     return '★'.repeat(rating) + '☆'.repeat(5 - rating);
 }
 
+// Вспомогательные функции для сохранения пустых коллекций
+function getCustomCollections() {
+    if (!currentUser) return [];
+    return JSON.parse(localStorage.getItem('moviehelper-collections-' + currentUser.username)) || [];
+}
+
+function saveCustomCollections(collections) {
+    if (!currentUser) return;
+    localStorage.setItem('moviehelper-collections-' + currentUser.username, JSON.stringify(collections));
+}
+
 function updateAllFilters() {
     const directors = [...new Set(movies.map(m => m.director).filter(Boolean))].sort();
     const dirFilter = document.getElementById('directorFilter');
@@ -233,7 +244,10 @@ function updateAllFilters() {
         tags.map(t => `<option value="${t}">${t}</option>`).join('');
     if (tags.includes(tagCurrent)) tagFilter.value = tagCurrent;
 
-    const collections = [...new Set(movies.map(m => m.collection).filter(Boolean))].sort();
+    // Объединяем коллекции из фильмов и пустые коллекции из localStorage
+    const customCols = getCustomCollections();
+    const collections = [...new Set([...movies.map(m => m.collection).filter(Boolean), ...customCols])].sort();
+
     const colFilter = document.getElementById('collectionFilter');
     if (colFilter) {
         const colCurrent = colFilter.value;
@@ -368,8 +382,17 @@ function renderFavorites() {
         : '<p style="color:var(--text-secondary); grid-column:1/-1; text-align:center; padding:40px;">В избранном пока пусто ❤️</p>';
 }
 // ===== КОЛЛЕКЦИИ =====
+// ===== КОЛЛЕКЦИИ =====
 function getCollections() {
     const collections = {};
+
+    // Сначала подгружаем пустые коллекции из памяти
+    const custom = getCustomCollections();
+    custom.forEach(c => {
+        if (!collections[c]) collections[c] = [];
+    });
+
+    // Затем распределяем фильмы
     movies.forEach(m => {
         if (m.collection) {
             if (!collections[m.collection]) collections[m.collection] = [];
@@ -401,16 +424,19 @@ function renderCollections() {
             `<span class="collection-movie-chip" onclick="openMovieDetail(${m.id})">${m.title}</span>`
         ).join('');
 
+        const safeName = name.replace(/'/g, "\\'");
+
         return `
             <div class="collection-card">
                 <div class="collection-card-header">
-                    <div class="collection-card-title">📦 ${name}</div>
-                    <button class="btn-delete-collection" onclick="deleteCollection('${name.replace(/'/g, "\\'")}')" title="Удалить коллекцию">🗑</button>
+                    <div class="collection-card-title" style="cursor:pointer;" onclick="goToCatalog(null, '${safeName}')" title="Открыть в каталоге">📦 ${name}</div>
+                    <button class="btn-delete-collection" onclick="deleteCollection('${safeName}')" title="Удалить коллекцию">🗑</button>
                 </div>
                 <div class="collection-card-count">${moviesInCollection.length} ${getMovieWord(moviesInCollection.length)}</div>
                 <div class="collection-card-movies">
                     ${moviesHTML}
                 </div>
+                <button class="link-btn" style="margin-top: 12px; width: 100%; text-align: center; border: 1px dashed var(--border); padding: 8px;" onclick="openModalWithCollection('${safeName}')">+ Добавить фильм</button>
             </div>
         `;
     }).join('');
@@ -422,19 +448,22 @@ function getMovieWord(count) {
     return 'фильмов/сериалов';
 }
 
-// Открыть модалку создания коллекции
 function openCreateCollectionModal() {
     document.getElementById('newCollectionName').value = '';
     document.getElementById('collectionModal').classList.remove('hidden');
     setTimeout(() => document.getElementById('newCollectionName').focus(), 100);
 }
 
-// Закрыть модалку
 function closeCollectionModal() {
     document.getElementById('collectionModal').classList.add('hidden');
 }
 
-// Обработка формы создания коллекции
+// Открытие модалки с уже предзаполненной коллекцией
+function openModalWithCollection(collectionName) {
+    openModal();
+    document.getElementById('movieCollection').value = collectionName;
+}
+
 document.getElementById('createCollectionForm').addEventListener('submit', (e) => {
     e.preventDefault();
     const name = document.getElementById('newCollectionName').value.trim();
@@ -446,7 +475,11 @@ document.getElementById('createCollectionForm').addEventListener('submit', (e) =
         return;
     }
 
-    // Создаём виртуальную коллекцию (просто обновляем фильтры и рендер)
+    // Сохраняем в localStorage
+    const custom = getCustomCollections();
+    custom.push(name);
+    saveCustomCollections(custom);
+
     closeCollectionModal();
     updateAllFilters();
     renderCollections();
@@ -455,8 +488,13 @@ document.getElementById('createCollectionForm').addEventListener('submit', (e) =
 async function deleteCollection(name) {
     if (!confirm(`Удалить коллекцию "${name}"?\nФильмы не будут удалены, просто у них очистится поле коллекции.`)) return;
 
-    const moviesInCollection = movies.filter(m => m.collection === name);
+    // Удаляем из локального хранилища
+    let custom = getCustomCollections();
+    custom = custom.filter(c => c !== name);
+    saveCustomCollections(custom);
 
+    // Очищаем атрибут у фильмов в БД
+    const moviesInCollection = movies.filter(m => m.collection === name);
     for (const m of moviesInCollection) {
         m.collection = '';
         await fetch(`/api/movies/${m.id}`, {
@@ -466,18 +504,7 @@ async function deleteCollection(name) {
         });
     }
 
-    moviesInCollection.forEach(m => {
-        const idx = movies.findIndex(x => x.id === m.id);
-        if (idx !== -1) movies[idx].collection = '';
-    });
-
-    renderHome();
-    renderCatalog();
-    renderCollections();
-    updateAllFilters();
-    if (!document.getElementById('analytics').classList.contains('hidden')) {
-        renderAnalytics();
-    }
+    await fetchMovies(); // Перекачиваем и рендерим
 }
 
 function goToCollections() {
@@ -493,9 +520,10 @@ function goToCollections() {
     renderCollections();
 }
 
-function goToCatalog(statusFilter = null) {
+function goToCatalog(statusFilter = null, collectionFilter = null) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('[data-page="catalog"]').classList.add('active');
+
     document.getElementById('home').classList.add('hidden');
     document.getElementById('catalogPage').classList.remove('hidden');
     document.getElementById('analytics').classList.add('hidden');
@@ -503,7 +531,23 @@ function goToCatalog(statusFilter = null) {
     document.getElementById('profilePage').classList.add('hidden');
     document.getElementById('collectionsPage').classList.add('hidden');
     document.getElementById('favoritesPage').classList.add('hidden');
+
     if (statusFilter) document.getElementById('statusFilter').value = statusFilter;
+
+    if (collectionFilter) {
+        // Сбрасываем остальные фильтры для чистоты поиска по коллекции
+        document.getElementById('searchInput').value = '';
+        document.getElementById('typeFilter').value = '';
+        document.getElementById('genreFilter').value = '';
+        document.getElementById('directorFilter').value = '';
+        document.getElementById('tagFilter').value = '';
+        document.getElementById('statusFilter').value = '';
+        document.getElementById('collectionFilter').value = collectionFilter;
+
+        const searchBtn = document.getElementById('searchClearBtn');
+        if (searchBtn) searchBtn.classList.remove('visible');
+    }
+
     renderCatalog();
 }
 function goToFavorites() {
@@ -636,26 +680,7 @@ async function cycleStatus(id) {
     if (!document.getElementById('collectionsPage').classList.contains('hidden')) renderCollections();
     if (!document.getElementById('movieDetail').classList.contains('hidden')) openMovieDetail(id);
 }
-async function toggleFavorite(id) {
-    const m = movies.find(x => x.id === id);
-    if (!m) return;
-    m.favorite = !m.favorite;
 
-    await fetch(`/api/movies/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(m)
-    });
-
-    renderHome();
-    renderCatalog();
-    renderFavorites();
-    updateAllFilters();
-    if (!document.getElementById('analytics').classList.contains('hidden')) renderAnalytics();
-    if (!document.getElementById('collectionsPage').classList.contains('hidden')) renderCollections();
-    if (!document.getElementById('favoritesPage').classList.contains('hidden')) renderFavorites();
-    if (!document.getElementById('movieDetail').classList.contains('hidden')) openMovieDetail(id);
-}
 // ===== Избранное =====
 async function toggleFavorite(id) {
     const m = movies.find(x => x.id === id);
@@ -746,10 +771,18 @@ document.getElementById('movieType').addEventListener('change', (e) => {
 
 // ===== TMDB Поиск =====
 let searchTimeout = null;
+let activeSearchAborter = null; // Контроллер для прерывания старых запросов
 
 async function searchTMDB(queryStr = null) {
     const query = queryStr || document.getElementById('tmdbSearchInput').value.trim();
     if (!query) return;
+
+    // Прерываем предыдущий сетевой запрос, если он еще не завершился
+    if (activeSearchAborter) {
+        activeSearchAborter.abort();
+    }
+    activeSearchAborter = new AbortController();
+    const signal = activeSearchAborter.signal;
 
     const resultsBox = document.getElementById('tmdbResults');
     const btn = document.getElementById('tmdbSearchBtn');
@@ -758,7 +791,7 @@ async function searchTMDB(queryStr = null) {
     resultsBox.innerHTML = '<div class="tmdb-loading">🔍 Ищем...</div>';
 
     try {
-        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+        const response = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal });
         if (!response.ok) throw new Error('Ничего не найдено');
         const data = await response.json();
 
@@ -769,14 +802,16 @@ async function searchTMDB(queryStr = null) {
         }
 
         resultsBox.innerHTML = results.map(item => {
-            // Используем унифицированные ключи от бэкенда
-            const title = item.title || 'Без названия';
+            const title = item.title || item.name || 'Без названия';
             const year = item.year || '—';
             const posterUrl = item.poster || '';
             const sourceInfo = item.source === 'merged' ? 'Слияние API' : (item.source || 'api');
 
+            // Безопасное экранирование всех кавычек для передачи JSON через HTML-атрибут
+            const safeItem = JSON.stringify(item).replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
             return `
-                <div class="tmdb-result-item" onclick='selectTMDBResult(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+                <div class="tmdb-result-item" onclick='selectTMDBResult(${safeItem})'>
                     <div class="tmdb-result-poster">
                         ${posterUrl ? `<img src="${posterUrl}" alt="${title}">` : '🎬'}
                     </div>
@@ -791,6 +826,7 @@ async function searchTMDB(queryStr = null) {
             `;
         }).join('');
     } catch (err) {
+        if (err.name === 'AbortError') return; // Игнорируем ошибку, если запрос был отменен намеренно
         resultsBox.innerHTML = `<div class="tmdb-empty">${err.message}</div>`;
     } finally {
         btn.disabled = false;
@@ -799,7 +835,10 @@ async function searchTMDB(queryStr = null) {
 }
 
 function selectTMDBResult(item) {
-    // Подставляем унифицированные данные из бэкенда в форму
+    // Отменяем любые зависшие запросы и таймеры, чтобы они не перетерли сообщение
+    if (activeSearchAborter) activeSearchAborter.abort();
+    clearTimeout(searchTimeout);
+
     document.getElementById('movieTitle').value = item.title || '';
     document.getElementById('movieYear').value = item.year || '';
     document.getElementById('movieDirector').value = item.director || '';
@@ -810,26 +849,30 @@ function selectTMDBResult(item) {
     document.getElementById('movieDuration').value = item.duration || '';
     document.getElementById('movieCollection').value = '';
 
-    const resultsBox = document.getElementById('tmdbResults');
-    resultsBox.innerHTML = '<div class="tmdb-loading">✅ Данные заполнены! Проверь поля ниже</div>';
-    setTimeout(() => { resultsBox.innerHTML = ''; }, 2000);
-}
-// Обработчик кнопки ручного поиска
-document.getElementById('tmdbSearchBtn').addEventListener('click', () => searchTMDB());
+    // Автоматически разворачиваем форму, чтобы вы сразу видели заполненные данные
+    document.getElementById('manualFormWrapper').classList.remove('collapsed');
+    document.getElementById('toggleFormBtn').classList.remove('collapsed');
 
-// ===== Автоматический поиск при вводе (Debounce) =====
+    const resultsBox = document.getElementById('tmdbResults');
+    resultsBox.innerHTML = '<div class="tmdb-loading">✅ Данные заполнены! Проверьте форму ниже.</div>';
+}
+
+// Обязательно сбрасываем таймер при ручном нажатии на кнопку
+document.getElementById('tmdbSearchBtn').addEventListener('click', () => {
+    clearTimeout(searchTimeout);
+    searchTMDB();
+});
+
 document.getElementById('tmdbSearchInput').addEventListener('input', (e) => {
     const query = e.target.value.trim();
-
-    // Сбрасываем таймер, если пользователь продолжает писать
     clearTimeout(searchTimeout);
 
     if (query.length < 3) {
         document.getElementById('tmdbResults').innerHTML = '';
+        if (activeSearchAborter) activeSearchAborter.abort();
         return;
     }
 
-    // Ждем 600 мс после последнего нажатия клавиши и делаем асинхронный фоновый запрос
     searchTimeout = setTimeout(() => {
         searchTMDB(query);
     }, 600);
@@ -921,20 +964,38 @@ function editMovie(id) {
 }
 
 // ===== Отправка формы =====
-// ===== Отправка формы =====
-document.getElementById('saveBtn').addEventListener('click', async () => {
-    const form = document.getElementById('addForm');
+let isSaving = false; // Программный замок
 
-    // Включаем нативную проверку обязательных полей HTML
-    if (!form.reportValidity()) return;
+document.getElementById('addForm').addEventListener('submit', async (e) => {
+    e.preventDefault(); // Блокируем стандартную перезагрузку страницы при нажатии Enter
+
+    if (isSaving) return; // Прерываем выполнение, если запрос уже в процессе
 
     const type = document.getElementById('movieType').value;
+    const title = document.getElementById('movieTitle').value.trim();
+    const year = parseInt(document.getElementById('movieYear').value);
+
+    // --- Проверка на дубликат в каталоге ---
+    if (!editingId) {
+        const isDuplicate = movies.some(m => m.title.toLowerCase() === title.toLowerCase() && m.year === year);
+        if (isDuplicate) {
+            alert('Этот фильм уже есть в вашем каталоге.');
+            return; // Прерываем сохранение безоговорочно
+        }
+    }
+
+    isSaving = true;
+    const btn = document.getElementById('saveBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Сохранение...';
+    btn.disabled = true;
+
     const isSeries = type === 'series' || type === 'documentary';
 
     const data = {
         type,
-        title: document.getElementById('movieTitle').value,
-        year: parseInt(document.getElementById('movieYear').value),
+        title,
+        year,
         director: document.getElementById('movieDirector').value,
         genre: document.getElementById('movieGenre').value,
         actors: document.getElementById('movieActors').value,
@@ -969,40 +1030,47 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
             });
         }
 
-        // Скачиваем актуальный список из БД.
-        // Функция fetchMovies() внутри себя сама вызовет renderCatalog, renderHome и т.д.
+        // Скачиваем актуальный список и переключаем интерфейс
         await fetchMovies();
-
         closeModal();
+        goToCatalog();
     } catch (err) {
         alert('Ошибка сохранения: ' + err.message);
+    } finally {
+        // Снимаем защиту
+        isSaving = false;
+        btn.disabled = false;
+        btn.textContent = originalText;
     }
 });
 
 // ===== Навигация =====
 document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+        const page = btn.dataset.page;
+
+        // Кнопка "Добавить" не является отдельной страницей.
+        // При её нажатии открываем Каталог и показываем модалку поверх него.
+        if (page === 'add') {
+            goToCatalog();
+            openModal();
+            return;
+        }
+
+        // Для остальных кнопок применяем визуальное выделение активной вкладки
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        const page = btn.dataset.page;
 
         // 1. Сначала ГАРАНТИРОВАННО скрываем ВСЕ страницы
         document.getElementById('home').classList.add('hidden');
         document.getElementById('catalogPage').classList.add('hidden');
         document.getElementById('collectionsPage').classList.add('hidden');
-        document.getElementById('favoritesPage').classList.add('hidden'); // <-- ЭТОГО НЕ ХВАТАЛО
+        document.getElementById('favoritesPage').classList.add('hidden');
         document.getElementById('analytics').classList.add('hidden');
         document.getElementById('movieDetail').classList.add('hidden');
         document.getElementById('profilePage').classList.add('hidden');
 
-        // 2. Обрабатываем специальные действия
-        if (page === 'add') {
-            openModal();
-            btn.classList.remove('active');
-            const currentPage = document.querySelector('.nav-btn.active')?.dataset.page || 'home';
-            document.querySelector(`[data-page="${currentPage}"]`).classList.add('active');
-            return;
-        }
+        // 2. Обрабатываем вкладки со специальной логикой маршрутизации
         if (page === 'collections') {
             goToCollections();
             return;
@@ -1012,7 +1080,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
             return;
         }
 
-        // 3. Показываем только нужную страницу и обновляем данные
+        // 3. Показываем только нужную базовую страницу и перерисовываем данные
         if (page === 'home') {
             document.getElementById('home').classList.remove('hidden');
             renderHome();

@@ -38,34 +38,42 @@
     <div id="app" class="hidden">
         <header class="header">
             <div class="logo">🎬 MovieHelper</div>
+
+            <!-- Основное меню по центру/слева -->
             <nav class="nav">
                 <button class="nav-btn active" data-page="home">Главная</button>
                 <button class="nav-btn" data-page="catalog">Каталог</button>
                 <button class="nav-btn" data-page="collections">Коллекции</button>
                 <button class="nav-btn" data-page="favorites">Избранное</button>
                 <button class="nav-btn" data-page="analytics">Аналитика</button>
-                <button class="nav-btn" data-page="add">+ Добавить</button>
             </nav>
-            <div class="user-menu">
-                <button id="userBtn" class="user-btn">
-                    <span class="user-avatar" id="userAvatar">?</span>
-                    <span class="user-name" id="userName">—</span>
-                    <span class="user-caret"></span>
-                </button>
-                <div id="userDropdown" class="user-dropdown hidden">
-                    <div class="user-dropdown-header">
-                        <div class="user-dropdown-avatar" id="dropdownAvatar">?</div>
-                        <div>
-                            <div class="user-dropdown-name" id="dropdownName">—</div>
-                            <div class="user-dropdown-login" id="dropdownLogin">@—</div>
+
+            <!-- Правый блок с кнопкой добавления и профилем -->
+            <div style="display: flex; align-items: center; gap: 16px; margin-left: auto;">
+                <button class="nav-btn" data-page="add" style="background: var(--accent); color: white; border: none; font-weight: bold; padding: 10px 20px; border-radius: 8px; box-shadow: 0 4px 12px rgba(255, 107, 107, 0.2);">+ Добавить</button>
+
+                <div class="user-menu" style="margin-left: 0;">
+                    <button id="userBtn" class="user-btn">
+                        <span class="user-avatar" id="userAvatar">?</span>
+                        <span class="user-name" id="userName">—</span>
+                        <span class="user-caret">▾</span>
+                    </button>
+                    <div id="userDropdown" class="user-dropdown hidden">
+                        <div class="user-dropdown-header">
+                            <div class="user-dropdown-avatar" id="dropdownAvatar">?</div>
+                            <div>
+                                <div class="user-dropdown-name" id="dropdownName">—</div>
+                                <div class="user-dropdown-login" id="dropdownLogin">@—</div>
+                            </div>
                         </div>
+                        <hr class="user-dropdown-divider">
+                        <button class="user-dropdown-item" onclick="showProfile()">👤 Профиль</button>
+                        <button class="user-dropdown-item" onclick="logout()">🚪 Выйти</button>
                     </div>
-                    <hr class="user-dropdown-divider">
-                    <button class="user-dropdown-item" onclick="showProfile()"> Профиль</button>
-                    <button class="user-dropdown-item" onclick="logout()">🚪 Выйти</button>
                 </div>
+
+                <button id="themeToggle" class="theme-toggle" title="Переключить тему">🌙</button>
             </div>
-            <button id="themeToggle" class="theme-toggle" title="Переключить тему">🌙</button>
         </header>
         <!-- ===== ГЛАВНАЯ ===== -->
         <section id="home" class="home">
@@ -336,7 +344,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-cancel" onclick="closeModal()">Отмена</button>
-                    <button type="button" class="btn-save" id="saveBtn">Сохранить</button>
+                    <button type="submit" class="btn-save" id="saveBtn" form="addForm">Сохранить</button>
                 </div>
             </div>
         </div>
