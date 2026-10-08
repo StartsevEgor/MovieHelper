@@ -288,6 +288,17 @@
                     </div>
                     <div id="tmdbResults" class="tmdb-results"></div>
                 </div>
+                <!-- Блок поиска по каталогу (для добавления фильма в коллекцию) -->
+                <div id="catalogSearchBlock" class="catalog-search-block hidden">
+                    <div class="small-label">🔍 Найти фильм в вашем каталоге</div>
+                    <div class="tmdb-search-row">
+                        <div class="search-input-wrap tmdb-search-wrap">
+                            <input type="text" id="catalogSearchInput" placeholder="Введите название фильма..." class="tmdb-search-field">
+                            <button type="button" class="search-clear-btn" id="catalogSearchClearBtn" title="Очистить">✕</button>
+                        </div>
+                    </div>
+                    <div id="catalogSearchResults" class="tmdb-results"></div>
+                </div>
                 <div id="manualFormWrapper" class="manual-form-wrapper collapsed">
                     <form id="addForm">
                         <select id="movieType">

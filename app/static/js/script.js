@@ -450,14 +450,27 @@ function openCreateCollectionModal() {
     setTimeout(() => document.getElementById('newCollectionName').focus(), 100);
 }
 
-function closeCollectionModal() {
-    document.getElementById('collectionModal').classList.add('hidden');
-}
-
 function openModalWithCollection(collectionName) {
-    goToCatalog(null, null, true); // Переходим в каталог, чтобы там открыть окно
-    openModal(); // Открываем форму
-    document.getElementById('movieCollection').value = collectionName; // Предзаполняем поле коллекции
+    // Открываем модалку в специальном режиме "добавить в коллекцию"
+    document.getElementById('modal').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent = `Добавить в коллекцию «${collectionName}»`;
+
+    // Скрываем TMDB-поиск, ручную форму и кнопку "Сохранить"
+    document.querySelector('.tmdb-search-block').classList.add('hidden');
+    document.getElementById('manualFormWrapper').classList.add('hidden');
+    const saveBtn = document.querySelector('.modal-actions .btn-save');
+    if (saveBtn) saveBtn.classList.add('hidden');
+
+    // Показываем блок поиска по каталогу
+    const block = document.getElementById('catalogSearchBlock');
+    block.classList.remove('hidden');
+    block.dataset.collection = collectionName;
+    document.getElementById('catalogSearchInput').value = '';
+
+    // Сразу показываем все фильмы, которых ещё нет в этой коллекции
+    renderCatalogSearchResults('');
+
+    setTimeout(() => document.getElementById('catalogSearchInput').focus(), 100);
 }
 
 document.getElementById('createCollectionForm').addEventListener('submit', (e) => {
@@ -499,7 +512,91 @@ async function deleteCollection(name) {
 
     await fetchMovies();
 }
+// ===== Поиск по каталогу (для добавления фильма в коллекцию) =====
+let catalogSearchTimeout = null;
 
+document.getElementById('catalogSearchInput').addEventListener('input', (e) => {
+    clearTimeout(catalogSearchTimeout);
+    const query = e.target.value.trim();
+    catalogSearchTimeout = setTimeout(() => {
+        renderCatalogSearchResults(query);
+    }, 300);
+});
+
+function renderCatalogSearchResults(query) {
+    const resultsBox = document.getElementById('catalogSearchResults');
+    const collectionName = document.getElementById('catalogSearchBlock').dataset.collection;
+
+    // Исключаем фильмы, которые уже состоят в этой коллекции
+    let filtered = movies.filter(m => m.collection !== collectionName);
+
+    if (query) {
+        const q = query.toLowerCase();
+        filtered = filtered.filter(m => {
+            const searchStr = [
+                m.title, m.director, m.actors, m.description, m.genre,
+                ...(m.tags || [])
+            ].join(' ').toLowerCase();
+            return searchStr.includes(q);
+        });
+    }
+
+    if (filtered.length === 0) {
+        resultsBox.innerHTML = query
+            ? '<div class="tmdb-empty">Ничего не найдено в вашем каталоге</div>'
+            : '<div class="tmdb-empty">В вашем каталоге нет фильмов для добавления</div>';
+        return;
+    }
+
+    resultsBox.innerHTML = filtered.map(m => {
+        const posterHTML = m.poster
+            ? `<img src="${m.poster}" alt="${m.title}" onerror="this.style.display='none'; this.parentElement.textContent='🎬'">`
+            : '🎬';
+        return `
+            <div class="catalog-result-item">
+                <div class="catalog-result-poster">${posterHTML}</div>
+                <div class="catalog-result-info">
+                    <div class="catalog-result-title">${m.title}</div>
+                    <div class="catalog-result-meta">
+                        <span>${m.year}</span>
+                        <span>• ${m.director || '—'}</span>
+                        <span>• ${typeLabels[m.type] || 'Фильм'}</span>
+                    </div>
+                </div>
+                <button class="catalog-result-add" onclick="event.stopPropagation(); addMovieToCollection(${m.id})">+ В коллекцию</button>
+            </div>
+        `;
+    }).join('');
+}
+
+async function addMovieToCollection(movieId) {
+    const m = movies.find(x => x.id === movieId);
+    if (!m) return;
+    const collectionName = document.getElementById('catalogSearchBlock').dataset.collection;
+
+    m.collection = collectionName;
+    try {
+        await fetch(`/api/movies/${movieId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(m)
+        });
+        await fetchMovies();
+        updateAllFilters();
+        renderCollections();
+
+        // Обновляем список в модалке — добавленный фильм исчезнет из него
+        const query = document.getElementById('catalogSearchInput').value.trim();
+        renderCatalogSearchResults(query);
+    } catch (err) {
+        alert('Ошибка добавления: ' + err.message);
+    }
+}
+
+// Крестик очистки для поиска по каталогу
+setupClearButton('catalogSearchInput', 'catalogSearchClearBtn', () => {
+    renderCatalogSearchResults('');
+});
 // ===== МАРШРУТИЗАЦИЯ И СБРОС ФИЛЬТРОВ =====
 function goToCollections() {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -743,11 +840,18 @@ function openModal() {
     document.getElementById('tmdbResults').innerHTML = '';
     document.getElementById('tmdbSearchInput').value = '';
     document.getElementById('movieCollection').value = '';
-
     const wrapper = document.getElementById('manualFormWrapper');
     const btn = document.getElementById('toggleFormBtn');
     wrapper.classList.add('collapsed');
     btn.classList.add('collapsed');
+
+    // === НОВОЕ: восстанавливаем стандартный вид модалки ===
+    document.querySelector('.tmdb-search-block').classList.remove('hidden');
+    document.getElementById('catalogSearchBlock').classList.add('hidden');
+    document.getElementById('manualFormWrapper').classList.remove('hidden');
+    const saveBtn = document.querySelector('.modal-actions .btn-save');
+    if (saveBtn) saveBtn.classList.remove('hidden');
+    // ========================================================
 
     document.getElementById('modal').classList.remove('hidden');
 }
@@ -757,6 +861,14 @@ function closeModal() {
     editingId = null;
     currentTags = [];
     currentRating = 0;
+
+    // === НОВОЕ: возвращаем модалку в исходное состояние ===
+    document.querySelector('.tmdb-search-block').classList.remove('hidden');
+    document.getElementById('catalogSearchBlock').classList.add('hidden');
+    document.getElementById('manualFormWrapper').classList.remove('hidden');
+    const saveBtn = document.querySelector('.modal-actions .btn-save');
+    if (saveBtn) saveBtn.classList.remove('hidden');
+    // =======================================================
 }
 
 // ===== Кнопка сворачивания =====
