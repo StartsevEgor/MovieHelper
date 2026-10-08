@@ -211,7 +211,7 @@ function formatRating(rating) {
     return '★'.repeat(rating) + '☆'.repeat(5 - rating);
 }
 
-// Вспомогательные функции для сохранения пустых коллекций
+// Вспомогательные функции для пустых коллекций (сохранение в памяти браузера)
 function getCustomCollections() {
     if (!currentUser) return [];
     return JSON.parse(localStorage.getItem('moviehelper-collections-' + currentUser.username)) || [];
@@ -244,7 +244,7 @@ function updateAllFilters() {
         tags.map(t => `<option value="${t}">${t}</option>`).join('');
     if (tags.includes(tagCurrent)) tagFilter.value = tagCurrent;
 
-    // Объединяем коллекции из фильмов и пустые коллекции из localStorage
+    // Объединяем коллекции из фильмов и пустые пользовательские коллекции
     const customCols = getCustomCollections();
     const collections = [...new Set([...movies.map(m => m.collection).filter(Boolean), ...customCols])].sort();
 
@@ -382,17 +382,13 @@ function renderFavorites() {
         : '<p style="color:var(--text-secondary); grid-column:1/-1; text-align:center; padding:40px;">В избранном пока пусто ❤️</p>';
 }
 // ===== КОЛЛЕКЦИИ =====
-// ===== КОЛЛЕКЦИИ =====
 function getCollections() {
     const collections = {};
-
-    // Сначала подгружаем пустые коллекции из памяти
     const custom = getCustomCollections();
     custom.forEach(c => {
         if (!collections[c]) collections[c] = [];
     });
 
-    // Затем распределяем фильмы
     movies.forEach(m => {
         if (m.collection) {
             if (!collections[m.collection]) collections[m.collection] = [];
@@ -421,22 +417,22 @@ function renderCollections() {
     grid.innerHTML = collectionNames.map(name => {
         const moviesInCollection = collections[name];
         const moviesHTML = moviesInCollection.map(m =>
-            `<span class="collection-movie-chip" onclick="openMovieDetail(${m.id})">${m.title}</span>`
+            `<span class="collection-movie-chip" onclick="event.stopPropagation(); openMovieDetail(${m.id})">${m.title}</span>`
         ).join('');
 
         const safeName = name.replace(/'/g, "\\'");
 
         return `
-            <div class="collection-card">
+            <div class="collection-card" style="cursor:pointer; transition: 0.2s;" onclick="goToCatalog(null, '${safeName}')" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
                 <div class="collection-card-header">
-                    <div class="collection-card-title" style="cursor:pointer;" onclick="goToCatalog(null, '${safeName}')" title="Открыть в каталоге">📦 ${name}</div>
-                    <button class="btn-delete-collection" onclick="deleteCollection('${safeName}')" title="Удалить коллекцию">🗑</button>
+                    <div class="collection-card-title">📦 ${name}</div>
+                    <button class="btn-delete-collection" onclick="event.stopPropagation(); deleteCollection('${safeName}')" title="Удалить коллекцию">🗑</button>
                 </div>
                 <div class="collection-card-count">${moviesInCollection.length} ${getMovieWord(moviesInCollection.length)}</div>
                 <div class="collection-card-movies">
                     ${moviesHTML}
                 </div>
-                <button class="link-btn" style="margin-top: 12px; width: 100%; text-align: center; border: 1px dashed var(--border); padding: 8px;" onclick="openModalWithCollection('${safeName}')">+ Добавить фильм</button>
+                <button class="link-btn" style="margin-top: 12px; width: 100%; text-align: center; border: 1px dashed var(--border); padding: 8px; border-radius: 8px;" onclick="event.stopPropagation(); openModalWithCollection('${safeName}')">+ Добавить фильм</button>
             </div>
         `;
     }).join('');
@@ -458,10 +454,10 @@ function closeCollectionModal() {
     document.getElementById('collectionModal').classList.add('hidden');
 }
 
-// Открытие модалки с уже предзаполненной коллекцией
 function openModalWithCollection(collectionName) {
-    openModal();
-    document.getElementById('movieCollection').value = collectionName;
+    goToCatalog(null, null, true); // Переходим в каталог, чтобы там открыть окно
+    openModal(); // Открываем форму
+    document.getElementById('movieCollection').value = collectionName; // Предзаполняем поле коллекции
 }
 
 document.getElementById('createCollectionForm').addEventListener('submit', (e) => {
@@ -475,7 +471,6 @@ document.getElementById('createCollectionForm').addEventListener('submit', (e) =
         return;
     }
 
-    // Сохраняем в localStorage
     const custom = getCustomCollections();
     custom.push(name);
     saveCustomCollections(custom);
@@ -488,12 +483,10 @@ document.getElementById('createCollectionForm').addEventListener('submit', (e) =
 async function deleteCollection(name) {
     if (!confirm(`Удалить коллекцию "${name}"?\nФильмы не будут удалены, просто у них очистится поле коллекции.`)) return;
 
-    // Удаляем из локального хранилища
     let custom = getCustomCollections();
     custom = custom.filter(c => c !== name);
     saveCustomCollections(custom);
 
-    // Очищаем атрибут у фильмов в БД
     const moviesInCollection = movies.filter(m => m.collection === name);
     for (const m of moviesInCollection) {
         m.collection = '';
@@ -504,55 +497,63 @@ async function deleteCollection(name) {
         });
     }
 
-    await fetchMovies(); // Перекачиваем и рендерим
+    await fetchMovies();
 }
 
+// ===== МАРШРУТИЗАЦИЯ И СБРОС ФИЛЬТРОВ =====
 function goToCollections() {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('[data-page="collections"]').classList.add('active');
+
     document.getElementById('home').classList.add('hidden');
     document.getElementById('catalogPage').classList.add('hidden');
     document.getElementById('analytics').classList.add('hidden');
     document.getElementById('movieDetail').classList.add('hidden');
     document.getElementById('profilePage').classList.add('hidden');
-    document.getElementById('collectionsPage').classList.remove('hidden');
     document.getElementById('favoritesPage').classList.add('hidden');
+    document.getElementById('collectionsPage').classList.remove('hidden');
+
     renderCollections();
 }
 
-function goToCatalog(statusFilter = null, collectionFilter = null) {
+function goToCatalog(statusFilter = null, collectionFilter = null, keepFilters = false) {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('[data-page="catalog"]').classList.add('active');
 
     document.getElementById('home').classList.add('hidden');
-    document.getElementById('catalogPage').classList.remove('hidden');
+    document.getElementById('collectionsPage').classList.add('hidden');
     document.getElementById('analytics').classList.add('hidden');
     document.getElementById('movieDetail').classList.add('hidden');
     document.getElementById('profilePage').classList.add('hidden');
-    document.getElementById('collectionsPage').classList.add('hidden');
     document.getElementById('favoritesPage').classList.add('hidden');
+    document.getElementById('catalogPage').classList.remove('hidden');
 
-    if (statusFilter) document.getElementById('statusFilter').value = statusFilter;
-
-    if (collectionFilter) {
-        // Сбрасываем остальные фильтры для чистоты поиска по коллекции
+    // Принудительно сбрасываем фильтры (кнопка в шапке), если не попросили обратного
+    if (!keepFilters) {
         document.getElementById('searchInput').value = '';
         document.getElementById('typeFilter').value = '';
         document.getElementById('genreFilter').value = '';
         document.getElementById('directorFilter').value = '';
         document.getElementById('tagFilter').value = '';
+        document.getElementById('collectionFilter').value = '';
         document.getElementById('statusFilter').value = '';
-        document.getElementById('collectionFilter').value = collectionFilter;
+        document.getElementById('sortFilter').value = 'date';
 
         const searchBtn = document.getElementById('searchClearBtn');
         if (searchBtn) searchBtn.classList.remove('visible');
     }
 
+    // Применяем точечные фильтры из других разделов и обновляем плашки UI
+    if (statusFilter) document.getElementById('statusFilter').value = statusFilter;
+    if (collectionFilter) document.getElementById('collectionFilter').value = collectionFilter;
+
     renderCatalog();
 }
+
 function goToFavorites() {
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
     document.querySelector('[data-page="favorites"]').classList.add('active');
+
     document.getElementById('home').classList.add('hidden');
     document.getElementById('catalogPage').classList.add('hidden');
     document.getElementById('collectionsPage').classList.add('hidden');
@@ -560,8 +561,10 @@ function goToFavorites() {
     document.getElementById('movieDetail').classList.add('hidden');
     document.getElementById('profilePage').classList.add('hidden');
     document.getElementById('favoritesPage').classList.remove('hidden');
+
     renderFavorites();
 }
+
 function openMovieDetail(id) {
     const m = movies.find(m => m.id === id);
     if (!m) return;
@@ -1049,28 +1052,11 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const page = btn.dataset.page;
 
-        // Кнопка "Добавить" не является отдельной страницей.
-        // При её нажатии открываем Каталог и показываем модалку поверх него.
         if (page === 'add') {
-            goToCatalog();
+            goToCatalog(null, null, true); // Переходим в каталог, сохраняя фильтры
             openModal();
             return;
         }
-
-        // Для остальных кнопок применяем визуальное выделение активной вкладки
-        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        // 1. Сначала ГАРАНТИРОВАННО скрываем ВСЕ страницы
-        document.getElementById('home').classList.add('hidden');
-        document.getElementById('catalogPage').classList.add('hidden');
-        document.getElementById('collectionsPage').classList.add('hidden');
-        document.getElementById('favoritesPage').classList.add('hidden');
-        document.getElementById('analytics').classList.add('hidden');
-        document.getElementById('movieDetail').classList.add('hidden');
-        document.getElementById('profilePage').classList.add('hidden');
-
-        // 2. Обрабатываем вкладки со специальной логикой маршрутизации
         if (page === 'collections') {
             goToCollections();
             return;
@@ -1079,14 +1065,25 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
             goToFavorites();
             return;
         }
+        if (page === 'catalog') {
+            goToCatalog(); // Клик по каталогу всегда вызывает полный сброс фильтров
+            return;
+        }
 
-        // 3. Показываем только нужную базовую страницу и перерисовываем данные
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.getElementById('home').classList.add('hidden');
+        document.getElementById('catalogPage').classList.add('hidden');
+        document.getElementById('collectionsPage').classList.add('hidden');
+        document.getElementById('favoritesPage').classList.add('hidden');
+        document.getElementById('analytics').classList.add('hidden');
+        document.getElementById('movieDetail').classList.add('hidden');
+        document.getElementById('profilePage').classList.add('hidden');
+
         if (page === 'home') {
             document.getElementById('home').classList.remove('hidden');
             renderHome();
-        } else if (page === 'catalog') {
-            document.getElementById('catalogPage').classList.remove('hidden');
-            renderCatalog();
         } else if (page === 'analytics') {
             document.getElementById('analytics').classList.remove('hidden');
             renderAnalytics();
