@@ -944,7 +944,13 @@ function editMovie(id) {
 }
 
 // ===== Отправка формы =====
+// ===== Отправка формы =====
 document.getElementById('saveBtn').addEventListener('click', async () => {
+    const form = document.getElementById('addForm');
+
+    // Включаем нативную проверку обязательных полей HTML
+    if (!form.reportValidity()) return;
+
     const type = document.getElementById('movieType').value;
     const isSeries = type === 'series' || type === 'documentary';
 
@@ -973,33 +979,22 @@ document.getElementById('saveBtn').addEventListener('click', async () => {
 
     try {
         if (editingId) {
-            const response = await fetch(`/api/movies/${editingId}`, {
+            await fetch(`/api/movies/${editingId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            if (response.ok) {
-                const updatedMovie = await response.json();
-                const index = movies.findIndex(m => m.id === editingId);
-                if (index !== -1) movies[index] = updatedMovie;
-            }
         } else {
-            const response = await fetch('/api/movies', {
+            await fetch('/api/movies', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(data)
             });
-            if (response.ok) {
-                const newMovie = await response.json();
-                movies.unshift(newMovie);
-            }
         }
 
-        renderHome();
-        renderCatalog();
-        renderCollections();
-        updateAllFilters();
-        if (!document.getElementById('analytics').classList.contains('hidden')) renderAnalytics();
+        // Скачиваем актуальный список из БД.
+        // Функция fetchMovies() внутри себя сама вызовет renderCatalog, renderHome и т.д.
+        await fetchMovies();
 
         closeModal();
     } catch (err) {
