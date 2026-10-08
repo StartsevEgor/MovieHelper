@@ -791,27 +791,31 @@ async function searchTMDB(queryStr = null) {
         }
 
         resultsBox.innerHTML = results.map(item => {
-            // Используем унифицированные ключи от нашего Flask-бэкенда
-            const title = item.title || 'Без названия';
-            const year = item.year || '—';
-            const posterUrl = item.poster || '';
-            const sourceInfo = item.source === 'merged' ? 'TMDB и кинопоиск' : (item.source || 'api');
+    const title = item.title || item.name || 'Без названия';
+    const year = (item.release_date || item.first_air_date || '').slice(0, 4);
+    const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
+    const posterUrl = item.poster_url || item.poster_path || '';
 
-            return `
-                <div class="tmdb-result-item" onclick='selectTMDBResult(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
-                    <div class="tmdb-result-poster">
-                        ${posterUrl ? `<img src="${posterUrl}" alt="${title}">` : '🎬'}
-                    </div>
-                    <div class="tmdb-result-info">
-                        <div class="tmdb-result-title">${title}</div>
-                        <div class="tmdb-result-meta">
-                            ${year}
-                            <span class="tmdb-result-type">${sourceInfo}</span>
-                        </div>
-                    </div>
+    // Определяем тип контента для отображения
+    let typeLabel = 'Фильм';
+    if (mediaType === 'tv') typeLabel = 'Сериал';
+    else if (mediaType === 'movie') typeLabel = 'Фильм';
+
+    return `
+        <div class="tmdb-result-item" onclick='selectTMDBResult(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+            <div class="tmdb-result-poster">
+                ${posterUrl ? `<img src="${posterUrl}" alt="${title}">` : '🎬'}
+            </div>
+            <div class="tmdb-result-info">
+                <div class="tmdb-result-title">${title}</div>
+                <div class="tmdb-result-meta">
+                    <span class="tmdb-result-type">${typeLabel}</span>
+                    ${year ? `<span>• ${year}</span>` : ''}
                 </div>
-            `;
-        }).join('');
+            </div>
+        </div>
+    `;
+}).join('');
     } catch (err) {
         resultsBox.innerHTML = `<div class="tmdb-empty">${err.message}</div>`;
     } finally {
