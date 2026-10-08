@@ -36,6 +36,8 @@ class Movie(db.Model):
 
     # Теги хранятся в виде текстовой JSON-строки (сериализация массива)
     tags = db.Column(db.Text, default='[]')
+    collection = db.Column(db.String(100))
+    favorite = db.Column(db.Boolean, default=False)
     status = db.Column(db.String(20), default='planned')
     rating = db.Column(db.Integer, default=0)
     review = db.Column(db.Text)

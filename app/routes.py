@@ -105,7 +105,8 @@ def get_movies():
         'id': m.id, 'type': m.type, 'title': m.title, 'year': m.year,
         'director': m.director, 'genre': m.genre, 'actors': m.actors,
         'poster': m.poster, 'description': m.description, 'duration': m.duration,
-        'tags': m.get_tags(), 'status': m.status, 'rating': m.rating,
+        'tags': m.get_tags(), 'collection': m.collection, 'favorite': m.favorite, # Новые поля
+        'status': m.status, 'rating': m.rating,
         'review': m.review, 'seasons': m.seasons, 'episodes': m.episodes,
         'watchedEpisodes': m.watched_episodes
     } for m in movies])
@@ -125,13 +126,16 @@ def add_movie():
         duration=data.get('duration', 0), status=data.get('status', 'planned'),
         rating=data.get('rating', 0), review=data.get('review'),
         seasons=data.get('seasons', 1), episodes=data.get('episodes', 1),
-        watched_episodes=data.get('watchedEpisodes', 0)
+        watched_episodes=data.get('watchedEpisodes', 0),
+        collection=data.get('collection'),      # Новое поле
+        favorite=data.get('favorite', False)    # Новое поле
     )
     new_movie.set_tags(data.get('tags', []))
 
     db.session.add(new_movie)
     db.session.commit()
-    return jsonify({'success': True})
+    # Возвращаем созданный объект (нужно для фронтенда script.js, который добавляет его в массив)
+    return jsonify({'success': True, 'id': new_movie.id})
 
 
 @main.route('/api/movies/<int:id>', methods=['PUT'])
@@ -155,6 +159,8 @@ def update_movie(id):
     movie.description = data.get('description')
     movie.duration = data.get('duration', 0)
     movie.set_tags(data.get('tags', []))
+    movie.collection = data.get('collection')            # Новое поле
+    movie.favorite = data.get('favorite', movie.favorite)# Новое поле
     movie.status = data.get('status', 'planned')
     movie.rating = data.get('rating', 0)
     movie.review = data.get('review')

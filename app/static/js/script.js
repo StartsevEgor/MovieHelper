@@ -1,26 +1,6 @@
 let currentUser = null;
 let movies = [];
 
-// ===== Примеры фильмов и сериалов =====
-const sampleMovies = [
-    { type: 'movie', title: 'Начало', year: 2010, director: 'Кристофер Нолан', genre: 'Фантастика, Триллер, Боевик', actors: 'Леонардо ДиКаприо, Джозеф Гордон-Левитт, Эллен Пейдж', poster: 'https://image.tmdb.org/t/p/w500/9gk7adHYeDvHkCSEqAvQNLV5Uge.jpg', description: 'Дом Кобб — талантливый вор, лучший из лучших в опасном искусстве извлечения.', duration: 148, collection: 'Нолан', tags: ['шедевр', 'фантастика'], status: 'watched', rating: 5, review: 'Потрясающий фильм!', favorite: true },
-    { type: 'movie', title: 'Интерстеллар', year: 2014, director: 'Кристофер Нолан', genre: 'Фантастика, Драма', actors: 'Мэттью МакКонахи, Энн Хэтэуэй', poster: 'https://image.tmdb.org/t/p/w500/gEU2QniE6E77NI6lCU6MxlNBvIx.jpg', description: 'Группа исследователей отправляется в путешествие через червоточину.', duration: 169, collection: 'Нолан', tags: ['космос', 'эпичный'], status: 'watched', rating: 5, review: '', favorite: true },
-    { type: 'movie', title: 'Тёмный рыцарь', year: 2008, director: 'Кристофер Нолан', genre: 'Боевик, Триллер, Драма', actors: 'Кристиан Бэйл, Хит Леджер', poster: 'https://image.tmdb.org/t/p/w500/qJ2tW6WMUDux911r6m7haRef0WH.jpg', description: 'Бэтмен поднимает ставки в войне с криминалом.', duration: 152, collection: 'Тёмный рыцарь', tags: ['супергерои', 'DC'], status: 'watched', rating: 5, review: '', favorite: false },
-    { type: 'movie', title: 'Матрица', year: 1999, director: 'Лана Вачовски', genre: 'Фантастика, Боевик', actors: 'Киану Ривз, Лоуренс Фишберн', poster: 'https://image.tmdb.org/t/p/w500/f89U3ADr1oiB1s9GkdPOEpXUk5H.jpg', description: 'Хакер Нео узнаёт правду о реальности.', duration: 136, collection: 'Матрица', tags: ['классика', 'философия'], status: 'watched', rating: 5, review: '', favorite: true },
-    { type: 'movie', title: 'Бойцовский клуб', year: 1999, director: 'Дэвид Финчер', genre: 'Триллер, Драма', actors: 'Брэд Питт, Эдвард Нортон', poster: 'https://image.tmdb.org/t/p/w500/pB8BM7pdSp6B6Ih7QZ4DrQ3PmJK.jpg', description: 'Клерк знакомится с Тайлером Дёрденом.', duration: 139, collection: '', tags: ['психология', 'культовый'], status: 'watched', rating: 5, review: '', favorite: false },
-    { type: 'movie', title: 'Форрест Гамп', year: 1994, director: 'Роберт Земекис', genre: 'Драма, Мелодрама', actors: 'Том Хэнкс, Робин Райт', poster: 'https://image.tmdb.org/t/p/w500/arw2vcBveWOVZr6pxd9XTd1TdQa.jpg', description: 'История жизни Форреста Гампа.', duration: 142, collection: '', tags: ['вдохновляющий', 'драма'], status: 'watched', rating: 5, review: '', favorite: true },
-    { type: 'movie', title: 'Дюна', year: 2021, director: 'Дени Вильнёв', genre: 'Фантастика, Приключения', actors: 'Тимоти Шаламе, Ребекка Фергюсон', poster: 'https://image.tmdb.org/t/p/w500/d5NXSklXo0qyIYkgV94XAgMIckC.jpg', description: 'Пол Атрейдес отправляется на Арракис.', duration: 155, collection: 'Дюна', tags: ['эпичный', 'фантастика'], status: 'watched', rating: 4, review: '', favorite: false },
-    { type: 'movie', title: 'Дюна: Часть вторая', year: 2024, director: 'Дени Вильнёв', genre: 'Фантастика, Приключения', actors: 'Тимоти Шаламе, Зендея', poster: 'https://image.tmdb.org/t/p/w500/8b8R8l88Qje9dn9OE8PY05Nez7S.jpg', description: 'Пол объединяется с фременами.', duration: 166, collection: 'Дюна', tags: ['эпичный', 'фантастика'], status: 'planned', rating: 0, review: '', favorite: false },
-    { type: 'movie', title: 'Джон Уик', year: 2014, director: 'Чад Стахелски', genre: 'Боевик, Триллер', actors: 'Киану Ривз', poster: 'https://image.tmdb.org/t/p/w500/fZPSd91yGE9fCcCe6OoQr6E3Bev.jpg', description: 'Бывший наёмник возвращается к активной жизни.', duration: 101, collection: 'Джон Уик', tags: ['боевик', 'экшн'], status: 'watched', rating: 4, review: '', favorite: false },
-    { type: 'movie', title: 'Оппенгеймер', year: 2023, director: 'Кристофер Нолан', genre: 'Драма, Исторический', actors: 'Киллиан Мёрфи, Эмили Блант', poster: 'https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg', description: 'История Роберта Оппенгеймера.', duration: 180, collection: 'Нолан', tags: ['история', 'биография'], status: 'planned', rating: 0, review: '', favorite: true },
-    { type: 'series', title: 'Во все тяжкие', year: 2008, director: 'Винс Гиллиган', genre: 'Драма, Триллер, Криминал', actors: 'Брайан Крэнстон, Аарон Пол', poster: 'https://image.tmdb.org/t/p/w500/ggFHVNu6YYI5L9pCfOacjizRGt.jpg', description: 'Учитель химии начинает варить метамфетамин.', duration: 47, collection: '', tags: ['культовый', 'драма'], status: 'watched', rating: 5, review: '', favorite: true, seasons: 5, episodes: 13, watchedEpisodes: 62 },
-    { type: 'series', title: 'Игра престолов', year: 2011, director: 'Дэвид Бениофф', genre: 'Фэнтези, Драма', actors: 'Эмилия Кларк, Питер Динклэйдж', poster: 'https://image.tmdb.org/t/p/w500/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg', description: 'Борьба за Железный трон.', duration: 57, collection: '', tags: ['фэнтези', 'эпичный'], status: 'watched', rating: 4, review: '', favorite: false, seasons: 8, episodes: 10, watchedEpisodes: 73 },
-    { type: 'series', title: 'Очень странные дела', year: 2016, director: 'Братья Даффер', genre: 'Фантастика, Ужасы', actors: 'Милли Бобби Браун', poster: 'https://image.tmdb.org/t/p/w500/49WJfeN0moxb9IPfGn8AIqMGskD.jpg', description: 'Исчезновение мальчика раскрывает тайны.', duration: 51, collection: '', tags: ['ностальгия', '80-е'], status: 'watching', rating: 4, review: '', favorite: true, seasons: 4, episodes: 9, watchedEpisodes: 25 },
-    { type: 'series', title: 'Чернобыль', year: 2019, director: 'Йохан Ренк', genre: 'Драма, Исторический', actors: 'Джаред Харрис', poster: 'https://image.tmdb.org/t/p/w500/hlLXt2tUzOv86Y857V8rN7h8w.jpg', description: 'Крупнейшая техногенная катастрофа.', duration: 60, collection: '', tags: ['история', 'драма'], status: 'watched', rating: 5, review: '', favorite: true, seasons: 1, episodes: 5, watchedEpisodes: 5 },
-    { type: 'series', title: 'Рик и Морти', year: 2013, director: 'Дэн Хармон', genre: 'Мультсериал, Фантастика', actors: 'Джастин Ройланд', poster: 'https://image.tmdb.org/t/p/w500/cvhNj9eoRBe5SxjCbQTkh05UP5K.jpg', description: 'Путешествия по вселенным.', duration: 23, collection: '', tags: ['мультфильм', 'юмор'], status: 'watching', rating: 5, review: '', favorite: false, seasons: 7, episodes: 10, watchedEpisodes: 51 },
-    { type: 'series', title: 'Дом Дракона', year: 2022, director: 'Райан Кондал', genre: 'Фэнтези, Драма', actors: 'Мэтт Смит, Эмма Д\'Арси', poster: 'https://image.tmdb.org/t/p/w500/7QMsOTMUswlwxJP0rTTZfmz2tX2.jpg', description: 'Гражданская война Таргариенов.', duration: 60, collection: '', tags: ['фэнтези', 'драконы'], status: 'watching', rating: 4, review: '', favorite: false, seasons: 2, episodes: 10, watchedEpisodes: 12 }
-];
-
 // ===== Регистрация =====
 document.getElementById('registerForm').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -765,7 +745,6 @@ document.getElementById('movieType').addEventListener('change', (e) => {
 });
 
 // ===== TMDB Поиск =====
-// ===== TMDB Поиск =====
 let searchTimeout = null;
 
 async function searchTMDB(queryStr = null) {
@@ -783,7 +762,6 @@ async function searchTMDB(queryStr = null) {
         if (!response.ok) throw new Error('Ничего не найдено');
         const data = await response.json();
 
-        // Бэкенд возвращает готовый список словарей, берем его напрямую
         const results = data.results || data;
         if (!Array.isArray(results) || results.length === 0) {
             resultsBox.innerHTML = '<div class="tmdb-empty">Ничего не найдено</div>';
@@ -791,31 +769,27 @@ async function searchTMDB(queryStr = null) {
         }
 
         resultsBox.innerHTML = results.map(item => {
-    const title = item.title || item.name || 'Без названия';
-    const year = (item.release_date || item.first_air_date || '').slice(0, 4);
-    const mediaType = item.media_type || (item.title ? 'movie' : 'tv');
-    const posterUrl = item.poster_url || item.poster_path || '';
+            // Используем унифицированные ключи от бэкенда
+            const title = item.title || 'Без названия';
+            const year = item.year || '—';
+            const posterUrl = item.poster || '';
+            const sourceInfo = item.source === 'merged' ? 'Слияние API' : (item.source || 'api');
 
-    // Определяем тип контента для отображения
-    let typeLabel = 'Фильм';
-    if (mediaType === 'tv') typeLabel = 'Сериал';
-    else if (mediaType === 'movie') typeLabel = 'Фильм';
-
-    return `
-        <div class="tmdb-result-item" onclick='selectTMDBResult(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
-            <div class="tmdb-result-poster">
-                ${posterUrl ? `<img src="${posterUrl}" alt="${title}">` : '🎬'}
-            </div>
-            <div class="tmdb-result-info">
-                <div class="tmdb-result-title">${title}</div>
-                <div class="tmdb-result-meta">
-                    <span class="tmdb-result-type">${typeLabel}</span>
-                    ${year ? `<span>• ${year}</span>` : ''}
+            return `
+                <div class="tmdb-result-item" onclick='selectTMDBResult(${JSON.stringify(item).replace(/'/g, "&apos;")})'>
+                    <div class="tmdb-result-poster">
+                        ${posterUrl ? `<img src="${posterUrl}" alt="${title}">` : '🎬'}
+                    </div>
+                    <div class="tmdb-result-info">
+                        <div class="tmdb-result-title">${title}</div>
+                        <div class="tmdb-result-meta">
+                            <span class="tmdb-result-type">${sourceInfo}</span>
+                            ${year !== '—' ? `<span>• ${year}</span>` : ''}
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    `;
-}).join('');
+            `;
+        }).join('');
     } catch (err) {
         resultsBox.innerHTML = `<div class="tmdb-empty">${err.message}</div>`;
     } finally {
@@ -833,14 +807,13 @@ function selectTMDBResult(item) {
     document.getElementById('movieActors').value = item.actors || '';
     document.getElementById('moviePoster').value = item.poster || '';
     document.getElementById('movieDescription').value = item.description || '';
-    document.getElementById('movieDuration').value = item.duration || ''; // <-- Добавленная строка
+    document.getElementById('movieDuration').value = item.duration || '';
     document.getElementById('movieCollection').value = '';
 
     const resultsBox = document.getElementById('tmdbResults');
     resultsBox.innerHTML = '<div class="tmdb-loading">✅ Данные заполнены! Проверь поля ниже</div>';
     setTimeout(() => { resultsBox.innerHTML = ''; }, 2000);
 }
-
 // Обработчик кнопки ручного поиска
 document.getElementById('tmdbSearchBtn').addEventListener('click', () => searchTMDB());
 
