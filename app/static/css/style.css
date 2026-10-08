@@ -595,6 +595,54 @@ body {
     font-size: 14px;
     cursor: pointer;
 }
+/* ===== Обёртка поиска с крестиком ===== */
+.search-input-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 250px;
+}
+.search-input-wrap .search-input,
+.search-input-wrap .hero-search,
+.search-input-wrap .tmdb-search-field {
+    width: 100%;
+    padding-right: 40px;
+}
+.search-clear-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 16px;
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+.search-clear-btn.visible {
+    display: flex;
+}
+.search-clear-btn:hover {
+    background: var(--accent);
+    color: white;
+}
+/* Для TMDB поиска */
+.tmdb-search-wrap {
+    flex: 1;
+    min-width: auto;
+}
+/* Для главной */
+.hero-search-wrap {
+    position: relative;
+}
 /* ===== Каталог ===== */
 .catalog {
     display: grid;
@@ -1396,6 +1444,24 @@ body {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     margin-bottom: 24px;
+}
+/* ===== Модалка создания коллекции ===== */
+#collectionModal .modal-content h2 {
+    margin-bottom: 20px;
+}
+#collectionModal input {
+    width: 100%;
+    padding: 12px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+#collectionModal input:focus {
+    outline: none;
+    border-color: var(--accent);
 }
 /* ===== Адаптив ===== */
 @media (max-width: 900px) {

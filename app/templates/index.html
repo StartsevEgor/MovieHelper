@@ -76,7 +76,10 @@
                         <p class="hero-subtitle">В твоей коллекции <span id="homeTotal">0</span> единиц контента</p>
                     </div>
                     <div class="hero-search-wrap">
-                        <input type="text" id="homeSearch" placeholder="🔍 Что будем смотреть?" class="hero-search">
+                        <div class="search-input-wrap hero-search-wrap">
+                            <input type="text" id="homeSearch" placeholder="🔍 Что будем смотреть?" class="hero-search">
+                            <button type="button" class="search-clear-btn" id="homeSearchClearBtn" title="Очистить"></button>
+                        </div>
                     </div>
                 </div>
                 <div class="stats-row">
@@ -131,7 +134,10 @@
         <!-- ===== КАТАЛОГ ===== -->
         <section id="catalogPage" class="hidden">
             <section class="filters" id="filtersPanel">
-                <input type="text" id="searchInput" placeholder="🔍 Поиск по названию, режиссёру, тегу..." class="search-input">
+                <div class="search-input-wrap">
+                    <input type="text" id="searchInput" placeholder="🔍 Поиск по названию, режиссёру, тегу..." class="search-input">
+                    <button type="button" class="search-clear-btn" id="searchClearBtn" title="Очистить">✕</button>
+                </div>
                 <select id="typeFilter" class="filter-select">
                     <option value="">Все типы</option>
                     <option value="movie">Фильмы</option>
@@ -165,13 +171,10 @@
             <main id="catalog" class="catalog"></main>
         </section>
         <!-- ===== КОЛЛЕКЦИИ ===== -->
-        <section id="collectionsPage" class="collections-page hidden">
+       <section id="collectionsPage" class="collections-page hidden">
             <div class="collections-header">
                 <h2> Мои коллекции</h2>
-                <div class="collections-create">
-                    <input type="text" id="newCollectionName" placeholder="Название новой коллекции..." class="collection-input">
-                    <button class="btn-create-collection" onclick="createCollection()">Создать</button>
-                </div>
+                <button class="btn-create-collection" onclick="openCreateCollectionModal()">+ Создать коллекцию</button>
             </div>
             <div id="collectionsGrid" class="collections-grid"></div>
         </section>
@@ -268,9 +271,11 @@
                     </button>
                 </div>
                 <div class="tmdb-search-block">
-                    <label class="small-label">Найти в базе TMDB</label>
                     <div class="tmdb-search-row">
-                        <input type="text" id="tmdbSearchInput" placeholder="Введите название..." class="tmdb-search-field">
+                        <div class="search-input-wrap tmdb-search-wrap">
+                            <input type="text" id="tmdbSearchInput" placeholder="Введите название..." class="tmdb-search-field">
+                            <button type="button" class="search-clear-btn" id="tmdbSearchClearBtn" title="Очистить">✕</button>
+                        </div>
                         <button type="button" id="tmdbSearchBtn" class="btn-tmdb">Найти</button>
                     </div>
                     <div id="tmdbResults" class="tmdb-results"></div>
@@ -344,6 +349,19 @@
                     <div class="modal-actions">
                         <button type="button" class="btn-cancel" onclick="closeProfileModal()">Отмена</button>
                         <button type="submit" class="btn-save">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- Модалка создания коллекции -->
+        <div id="collectionModal" class="modal hidden">
+            <div class="modal-content" style="max-width:400px;">
+                <h2>Новая коллекция</h2>
+                <form id="createCollectionForm">
+                    <input type="text" id="newCollectionName" placeholder="Название коллекции" required>
+                    <div class="modal-actions">
+                        <button type="button" class="btn-cancel" onclick="closeCollectionModal()">Отмена</button>
+                        <button type="submit" class="btn-save">Создать</button>
                     </div>
                 </form>
             </div>

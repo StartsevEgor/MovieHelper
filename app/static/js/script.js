@@ -442,9 +442,22 @@ function getMovieWord(count) {
     return 'фильмов/сериалов';
 }
 
-function createCollection() {
-    const input = document.getElementById('newCollectionName');
-    const name = input.value.trim();
+// Открыть модалку создания коллекции
+function openCreateCollectionModal() {
+    document.getElementById('newCollectionName').value = '';
+    document.getElementById('collectionModal').classList.remove('hidden');
+    setTimeout(() => document.getElementById('newCollectionName').focus(), 100);
+}
+
+// Закрыть модалку
+function closeCollectionModal() {
+    document.getElementById('collectionModal').classList.add('hidden');
+}
+
+// Обработка формы создания коллекции
+document.getElementById('createCollectionForm').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('newCollectionName').value.trim();
     if (!name) return;
 
     const collections = getCollections();
@@ -453,12 +466,11 @@ function createCollection() {
         return;
     }
 
-    alert('Коллекция "' + name + '" создана! Теперь при добавлении или редактировании фильма укажи эту коллекцию в поле "Коллекция".');
-    input.value = '';
-
+    // Создаём виртуальную коллекцию (просто обновляем фильтры и рендер)
+    closeCollectionModal();
     updateAllFilters();
     renderCollections();
-}
+});
 
 async function deleteCollection(name) {
     if (!confirm(`Удалить коллекцию "${name}"?\nФильмы не будут удалены, просто у них очистится поле коллекции.`)) return;
@@ -987,6 +999,17 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         const page = btn.dataset.page;
+
+        // 1. Сначала ГАРАНТИРОВАННО скрываем ВСЕ страницы
+        document.getElementById('home').classList.add('hidden');
+        document.getElementById('catalogPage').classList.add('hidden');
+        document.getElementById('collectionsPage').classList.add('hidden');
+        document.getElementById('favoritesPage').classList.add('hidden'); // <-- ЭТОГО НЕ ХВАТАЛО
+        document.getElementById('analytics').classList.add('hidden');
+        document.getElementById('movieDetail').classList.add('hidden');
+        document.getElementById('profilePage').classList.add('hidden');
+
+        // 2. Обрабатываем специальные действия
         if (page === 'add') {
             openModal();
             btn.classList.remove('active');
@@ -1002,14 +1025,18 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
             goToFavorites();
             return;
         }
-        document.getElementById('home').classList.toggle('hidden', page !== 'home');
-        document.getElementById('catalogPage').classList.toggle('hidden', page !== 'catalog');
-        document.getElementById('analytics').classList.toggle('hidden', page !== 'analytics');
-        document.getElementById('movieDetail').classList.add('hidden');
-        document.getElementById('profilePage').classList.add('hidden');
-        document.getElementById('collectionsPage').classList.add('hidden');
-        if (page === 'analytics') renderAnalytics();
-        if (page === 'home') renderHome();
+
+        // 3. Показываем только нужную страницу и обновляем данные
+        if (page === 'home') {
+            document.getElementById('home').classList.remove('hidden');
+            renderHome();
+        } else if (page === 'catalog') {
+            document.getElementById('catalogPage').classList.remove('hidden');
+            renderCatalog();
+        } else if (page === 'analytics') {
+            document.getElementById('analytics').classList.remove('hidden');
+            renderAnalytics();
+        }
     });
 });
 
@@ -1159,7 +1186,45 @@ themeToggle.addEventListener('click', () => {
         renderAnalytics();
     }
 });
+// ===== Крестик очистки поиска =====
 
+// Универсальная функция: показывает/скрывает крестик
+function setupClearButton(inputId, btnId, onClear) {
+    const input = document.getElementById(inputId);
+    const btn = document.getElementById(btnId);
+    if (!input || !btn) return;
+
+    // Показываем крестик только когда есть текст
+    input.addEventListener('input', () => {
+        btn.classList.toggle('visible', input.value.length > 0);
+    });
+
+    // При клике на крестик — очищаем
+    btn.addEventListener('click', () => {
+        input.value = '';
+        btn.classList.remove('visible');
+        input.focus();
+        if (onClear) onClear();
+    });
+}
+
+// Поиск в каталоге
+setupClearButton('searchInput', 'searchClearBtn', () => {
+    renderCatalog();
+});
+
+// Поиск на главной
+setupClearButton('homeSearch', 'homeSearchClearBtn', () => {
+    // Если перешли в каталог — сбросить и там
+    document.getElementById('searchInput').value = '';
+    document.getElementById('searchClearBtn').classList.remove('visible');
+    renderCatalog();
+});
+
+// Поиск TMDB
+setupClearButton('tmdbSearchInput', 'tmdbSearchClearBtn', () => {
+    document.getElementById('tmdbResults').innerHTML = '';
+});
 // ===== Профиль =====
 function showProfile() {
     document.getElementById('userDropdown').classList.add('hidden');
@@ -1213,4 +1278,12 @@ document.getElementById('editProfileForm').addEventListener('submit', async (e) 
     updateUserUI();
     showProfile();
     closeProfileModal();
+});
+// Закрытие модалки коллекции по Escape
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        if (!document.getElementById('collectionModal').classList.contains('hidden')) {
+            closeCollectionModal();
+        }
+    }
 });
